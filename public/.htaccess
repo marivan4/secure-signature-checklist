@@ -25,6 +25,8 @@ RewriteRule ^ index.html [L]
     Header set X-XSS-Protection "1; mode=block"
     # Prevent MIME type sniffing
     Header set X-Content-Type-Options "nosniff"
+    # Ensure UTF-8 encoding for all text content
+    Header set Content-Type "text/html; charset=UTF-8"
 </IfModule>
 
 # Enable CORS for API
@@ -43,6 +45,8 @@ RewriteRule ^ index.html [L]
     php_value upload_max_filesize 10M
     php_value post_max_size 20M
     php_value memory_limit 256M
+    # Garantir que PHP use UTF-8
+    php_value default_charset "UTF-8"
 </IfModule>
 
 # Disable directory listing

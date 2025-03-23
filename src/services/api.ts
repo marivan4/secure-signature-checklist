@@ -113,10 +113,10 @@ export const getChecklists = async (userId?: number): Promise<ApiResponse<Checkl
       data: response.data
     };
   } catch (error) {
-    console.error('Error fetching checklists:', error);
+    console.error('Erro ao buscar checklists:', error);
     return {
       success: false,
-      error: 'Failed to fetch checklists'
+      error: 'Falha ao buscar checklists'
     };
   }
 };
@@ -163,10 +163,10 @@ export const getChecklistById = async (id: number): Promise<ApiResponse<Checklis
       data: response.data
     };
   } catch (error) {
-    console.error(`Error fetching checklist ${id}:`, error);
+    console.error(`Erro ao buscar checklist ${id}:`, error);
     return {
       success: false,
-      error: `Failed to fetch checklist with ID ${id}`
+      error: `Falha ao buscar checklist com ID ${id}`
     };
   }
 };
@@ -196,10 +196,10 @@ export const createChecklist = async (checklist: Omit<Checklist, 'id' | 'created
       data: response.data
     };
   } catch (error) {
-    console.error('Error creating checklist:', error);
+    console.error('Erro ao criar checklist:', error);
     return {
       success: false,
-      error: 'Failed to create checklist'
+      error: 'Falha ao criar checklist'
     };
   }
 };
@@ -236,10 +236,10 @@ export const updateChecklistStatus = async (id: number, status: Checklist['statu
       data: response.data
     };
   } catch (error) {
-    console.error(`Error updating checklist ${id} status:`, error);
+    console.error(`Erro ao atualizar status do checklist ${id}:`, error);
     return {
       success: false,
-      error: `Failed to update checklist status`
+      error: `Falha ao atualizar status do checklist`
     };
   }
 };
@@ -264,45 +264,134 @@ export const generateSignatureLink = async (checklistId: number): Promise<ApiRes
       data: response.data.link
     };
   } catch (error) {
-    console.error('Error generating signature link:', error);
+    console.error('Erro ao gerar link de assinatura:', error);
     return {
       success: false,
-      error: 'Failed to generate signature link'
+      error: 'Falha ao gerar link de assinatura'
     };
   }
 };
 
+// Função para validar número de telefone brasileiro
+const validateBrazilianPhone = (phone: string): string => {
+  // Remove todos os caracteres não numéricos
+  let cleanPhone = phone.replace(/\D/g, '');
+  
+  // Verifica se já tem o código do país (55)
+  if (!cleanPhone.startsWith('55')) {
+    cleanPhone = '55' + cleanPhone;
+  }
+  
+  // Valida se tem o comprimento correto (5510XXXXXXXX ou 55XXXXXXXXX)
+  if (cleanPhone.length < 12 || cleanPhone.length > 13) {
+    throw new Error('Número de telefone inválido. Deve conter DDD + número');
+  }
+  
+  return cleanPhone;
+};
+
 // Função para enviar link de assinatura via WhatsApp
 export const sendWhatsAppSignatureLink = async (phone: string, link: string): Promise<ApiResponse<boolean>> => {
-  try {
-    // Em desenvolvimento, usamos dados mockados
-    if (!import.meta.env.PROD) {
-      // Mock para desenvolvimento - simula envio bem-sucedido
-      console.log(`[MOCK] Sending WhatsApp to ${phone}: ${link}`);
+  let retryCount = 0;
+  const maxRetries = 3;
+  
+  const attemptSend = async (): Promise<ApiResponse<boolean>> => {
+    try {
+      let phoneNumber;
+      
+      try {
+        phoneNumber = validateBrazilianPhone(phone);
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Número de telefone inválido'
+        };
+      }
+      
+      // Em desenvolvimento, usamos dados mockados
+      if (!import.meta.env.PROD) {
+        // Mock para desenvolvimento - simula envio bem-sucedido
+        console.log(`[MOCK] Enviando WhatsApp para ${phoneNumber}: ${link}`);
+        return {
+          success: true,
+          data: true
+        };
+      }
+
+      // Mensagem formatada em português
+      const message = `🚗 *Sistema de Rastreamento Veicular* 🚗\n\n` + 
+                      `Olá! Seu contrato está pronto para assinatura.\n\n` +
+                      `Por favor, clique no link abaixo para assinar:\n${link}\n\n` +
+                      `Este link expira em 24 horas.\n` +
+                      `Obrigado!`;
+
+      // Em produção, usa a API de WhatsApp
+      const response = await api.post('/checklists/send_whatsapp.php', { 
+        phone: phoneNumber, 
+        link,
+        message
+      });
+      
+      // Verifica se a API retornou sucesso
+      if (response.data && response.data.success) {
+        return {
+          success: true,
+          data: true
+        };
+      } else {
+        throw new Error(response.data.error || 'Erro no envio de WhatsApp');
+      }
+    } catch (error) {
+      console.error('Erro ao enviar mensagem de WhatsApp:', error);
+      
+      // Se ainda não excedeu o número máximo de tentativas, tenta novamente
+      if (retryCount < maxRetries) {
+        retryCount++;
+        console.log(`Tentativa ${retryCount} de ${maxRetries} para enviar WhatsApp`);
+        
+        // Espera 2 segundos antes de tentar novamente
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return attemptSend();
+      }
+      
       return {
-        success: true,
-        data: true
+        success: false,
+        error: error instanceof Error ? error.message : 'Falha ao enviar mensagem de WhatsApp após várias tentativas'
       };
     }
-
-    // Em produção, usa a API PHP
-    const response = await api.post('/checklists/send_whatsapp.php', { phone, link });
-    return {
-      success: true,
-      data: response.data.sent
-    };
-  } catch (error) {
-    console.error('Error sending WhatsApp message:', error);
-    return {
-      success: false,
-      error: 'Failed to send WhatsApp message'
-    };
-  }
+  };
+  
+  return attemptSend();
 };
 
 // Função para assinar um checklist
 export const signChecklist = async (token: string, signatureData: string): Promise<ApiResponse<Checklist>> => {
   try {
+    // Obtém o IP e geolocalização aproximada
+    let ipAddress = '127.0.0.1';
+    let geolocation = null;
+    
+    // Em produção, tenta obter o IP real e geolocalização
+    if (import.meta.env.PROD) {
+      try {
+        const ipResponse = await axios.get('https://api.ipify.org?format=json');
+        ipAddress = ipResponse.data.ip;
+        
+        // Opcional: obter geolocalização aproximada
+        const geoResponse = await axios.get(`https://ipapi.co/${ipAddress}/json/`);
+        geolocation = {
+          city: geoResponse.data.city,
+          region: geoResponse.data.region,
+          country: geoResponse.data.country_name,
+          latitude: geoResponse.data.latitude,
+          longitude: geoResponse.data.longitude
+        };
+      } catch (error) {
+        console.error('Erro ao obter informações de IP/geolocalização:', error);
+        // Continua mesmo se falhar - não é crítico
+      }
+    }
+    
     // Em desenvolvimento, usamos dados mockados
     if (!import.meta.env.PROD) {
       // Mock para desenvolvimento
@@ -315,7 +404,7 @@ export const signChecklist = async (token: string, signatureData: string): Promi
         registrationDate: '2023-06-15',
         status: 'signed',
         signedAt: new Date().toISOString(),
-        ipAddress: '127.0.0.1',
+        ipAddress: ipAddress,
         createdAt: '2023-06-15T10:00:00Z'
       };
 
@@ -326,16 +415,24 @@ export const signChecklist = async (token: string, signatureData: string): Promi
     }
 
     // Em produção, usa a API PHP
-    const response = await api.post('/checklists/sign.php', { token, signatureData });
+    const response = await api.post('/checklists/sign.php', { 
+      token, 
+      signatureData,
+      ipAddress,
+      geolocation,
+      // Inclui timezone do Brasil
+      timezone: 'America/Sao_Paulo'
+    });
+    
     return {
       success: true,
       data: response.data
     };
   } catch (error) {
-    console.error('Error signing checklist:', error);
+    console.error('Erro ao assinar checklist:', error);
     return {
       success: false,
-      error: 'Failed to sign checklist'
+      error: 'Falha ao assinar checklist'
     };
   }
 };

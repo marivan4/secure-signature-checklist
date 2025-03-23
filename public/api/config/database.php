@@ -22,5 +22,26 @@ class Database {
 
         return $this->conn;
     }
+    
+    // Criar tabela de veículos se não existir
+    public function createVehiclesTableIfNotExists() {
+        $query = "CREATE TABLE IF NOT EXISTS veiculos (
+            chassis VARCHAR(17) PRIMARY KEY,
+            linha VARCHAR(50),
+            modelo VARCHAR(50),
+            data_fabricacao DATE,
+            ultima_inspecao DATETIME,
+            cliente_id INT,
+            FOREIGN KEY (cliente_id) REFERENCES usuarios(id)
+        )";
+        
+        try {
+            $this->conn->exec($query);
+            return true;
+        } catch(PDOException $exception) {
+            echo "Erro ao criar tabela: " . $exception->getMessage();
+            return false;
+        }
+    }
 }
 ?>
