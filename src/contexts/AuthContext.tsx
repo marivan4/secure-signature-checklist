@@ -2,32 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, AuthContextType } from '@/lib/types';
 import { toast } from 'sonner';
-
-// Mock API for now - will be replaced with actual API calls
-const mockLogin = async (username: string, password: string): Promise<User | null> => {
-  // In a real app, this would be an API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (username === 'admin' && password === 'admin') {
-        resolve({
-          id: 1,
-          username: 'admin',
-          role: 'admin',
-          createdAt: new Date().toISOString()
-        });
-      } else if (username === 'client' && password === 'client') {
-        resolve({
-          id: 2,
-          username: 'client',
-          role: 'client',
-          createdAt: new Date().toISOString()
-        });
-      } else {
-        resolve(null);
-      }
-    }, 800);
-  });
-};
+import api from '@/services/api';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -54,7 +29,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     setError(null);
     try {
-      const user = await mockLogin(username, password);
+      // Em desenvolvimento, usa mock. Em produção, usa a API PHP
+      let user;
+      
+      // Se estamos em produção
+      if (import.meta.env.PROD) {
+        const response = await api.post('/login.php', {
+          username,
+          password
+        });
+        user = response.data;
+      } else {
+        // Mock login para desenvolvimento
+        if (username === 'admin' && password === 'admin') {
+          user = {
+            id: 1,
+            username: 'admin',
+            role: 'admin',
+            createdAt: new Date().toISOString()
+          };
+        } else if (username === 'client' && password === 'client') {
+          user = {
+            id: 2,
+            username: 'client',
+            role: 'client',
+            createdAt: new Date().toISOString()
+          };
+        }
+      }
+      
       if (user) {
         setUser(user);
         localStorage.setItem('user', JSON.stringify(user));
