@@ -11,5 +11,45 @@ RewriteRule ^ - [L]
 RewriteCond %{REQUEST_URI} \.php$
 RewriteRule ^ - [L]
 
+# Allow direct access to the API directory
+RewriteRule ^api/ - [L]
+
 # Otherwise, redirect all requests to index.html
 RewriteRule ^ index.html [L]
+
+# Set security headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    # Enable XSS protection
+    Header set X-XSS-Protection "1; mode=block"
+    # Prevent MIME type sniffing
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Enable CORS for API
+<IfModule mod_headers.c>
+    <FilesMatch "\.(php)$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    </FilesMatch>
+</IfModule>
+
+# PHP settings (if needed)
+<IfModule mod_php8.c>
+    php_flag display_errors Off
+    php_value max_execution_time 300
+    php_value upload_max_filesize 10M
+    php_value post_max_size 20M
+    php_value memory_limit 256M
+</IfModule>
+
+# Disable directory listing
+Options -Indexes
+
+# Prevent access to sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
