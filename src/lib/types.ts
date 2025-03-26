@@ -2,7 +2,7 @@
 export interface User {
   id: number;
   username: string;
-  role: 'admin' | 'client';
+  role: 'admin' | 'client' | 'manager';
   createdAt: string;
 }
 
@@ -32,6 +32,19 @@ export interface Checklist {
   createdAt: string;
 }
 
+export interface Invoice {
+  id: number;
+  userId: number;
+  checklistId?: number;
+  invoiceNumber: string;
+  description: string;
+  amount: number;
+  status: 'pending' | 'paid' | 'cancelled';
+  dueDate: string;
+  paidDate?: string;
+  createdAt: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -50,4 +63,13 @@ export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+export interface WhatsAppConfig {
+  id: number;
+  apiKey: string;
+  instance: string;
+  baseUrl: string;
+  userId: number;
+  createdAt: string;
 }

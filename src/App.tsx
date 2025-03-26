@@ -13,7 +13,13 @@ import Signature from "./pages/Signature";
 import NotFound from "./pages/NotFound";
 import ChecklistForm from "@/components/Checklist/ChecklistForm";
 import ChecklistDetail from "@/components/Checklist/ChecklistDetail";
+import InvoicePage from "./pages/Invoices";
+import WhatsAppSettings from "./components/WhatsApp/WhatsAppSettings";
 import { useState } from "react";
+import InvoiceForm from "./components/Invoice/InvoiceForm";
+import InvoiceDetail from "./components/Invoice/InvoiceDetail";
+import InvoiceSend from "./components/Invoice/InvoiceSend";
+import InvoiceExport from "./components/Invoice/InvoiceExport";
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -39,6 +45,21 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (!user || user.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Manager or Admin route component
+const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
     return <Navigate to="/dashboard" replace />;
   }
   
@@ -79,6 +100,87 @@ const AppRoutes = () => (
           <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
             <ChecklistDetail />
           </div>
+        </ProtectedRoute>
+      } 
+    />
+    
+    {/* Invoice Routes */}
+    <Route 
+      path="/invoices" 
+      element={
+        <ProtectedRoute>
+          <InvoicePage />
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/invoices/new" 
+      element={
+        <ProtectedRoute>
+          <ManagerRoute>
+            <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
+              <InvoiceForm />
+            </div>
+          </ManagerRoute>
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/invoices/edit/:id" 
+      element={
+        <ProtectedRoute>
+          <ManagerRoute>
+            <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
+              <InvoiceForm />
+            </div>
+          </ManagerRoute>
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/invoices/:id" 
+      element={
+        <ProtectedRoute>
+          <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
+            <InvoiceDetail />
+          </div>
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/invoices/:id/send" 
+      element={
+        <ProtectedRoute>
+          <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
+            <InvoiceSend />
+          </div>
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/invoices/:id/export" 
+      element={
+        <ProtectedRoute>
+          <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
+            <InvoiceExport />
+          </div>
+        </ProtectedRoute>
+      } 
+    />
+    
+    {/* WhatsApp Routes */}
+    <Route 
+      path="/whatsapp" 
+      element={
+        <ProtectedRoute>
+          <ManagerRoute>
+            <WhatsAppSettings />
+          </ManagerRoute>
         </ProtectedRoute>
       } 
     />

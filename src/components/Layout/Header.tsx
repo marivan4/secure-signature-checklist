@@ -1,63 +1,160 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, User } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { 
+  LogOut, 
+  User, 
+  Menu, 
+  X, 
+  Home, 
+  ClipboardList, 
+  FileText,
+  MessageSquare
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useMobile } from '@/hooks/use-mobile';
 
 const Header: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMobile = useMobile();
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
+  };
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
+  const closeMenu = () => {
+    setMenuOpen(false);
+  };
+
+  const menuItems = [
+    { label: 'Início', path: '/dashboard', icon: <Home className="mr-2 h-4 w-4" /> },
+    { label: 'Contratos', path: '/checklist/new', icon: <ClipboardList className="mr-2 h-4 w-4" />, roles: ['admin'] },
+    { label: 'Faturas', path: '/invoices', icon: <FileText className="mr-2 h-4 w-4" /> },
+    { label: 'WhatsApp', path: '/whatsapp', icon: <MessageSquare className="mr-2 h-4 w-4" />, roles: ['admin', 'manager'] },
+  ];
+
+  // Filtra itens de menu com base na função do usuário
+  const filteredMenuItems = menuItems.filter(item => 
+    !item.roles || item.roles.includes(user?.role || '')
+  );
+
   return (
-    <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-sm border-b">
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
-        <Link 
-          to="/" 
-          className="flex items-center space-x-2 transition-opacity hover:opacity-80"
-        >
-          <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold">SC</span>
-          </div>
-          <span className="font-display font-bold text-lg tracking-tight">SecureCheck</span>
+    <header className="sticky top-0 z-40 w-full border-b bg-background">
+      <div className="container flex h-16 items-center">
+        <Link to="/" className="flex items-center space-x-2">
+          <img src="/assets/logo.svg" alt="Logo" className="h-8 w-auto" />
+          <span className="font-medium hidden md:inline-block">Sistema de Rastreamento</span>
         </Link>
-        
-        <div className="flex items-center gap-4">
-          {isAuthenticated ? (
-            <>
-              <div className="hidden md:flex items-center gap-1 text-sm font-medium">
-                <User size={16} className="text-muted-foreground" />
-                <span className="text-muted-foreground mr-2">|</span>
-                <span>{user?.username}</span>
-                <span className="chip ml-2 capitalize">{user?.role}</span>
-              </div>
-              
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleLogout}
-                className="flex items-center gap-1"
+
+        {/* Desktop Navigation */}
+        {user && (
+          <nav className="mx-6 hidden md:flex md:items-center md:space-x-4 lg:space-x-6">
+            {filteredMenuItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary flex items-center",
+                  location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                )}
               >
-                <LogOut size={16} />
-                <span className="hidden md:inline">Logout</span>
+                {item.icon}
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        )}
+
+        <div className="flex flex-1 items-center justify-end space-x-2">
+          {user ? (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                  <DropdownMenuItem className="text-muted-foreground">
+                    {user.username}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Mobile Menu Button */}
+              <Button
+                variant="ghost"
+                className="md:hidden"
+                size="icon"
+                onClick={toggleMenu}
+              >
+                {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             </>
           ) : (
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={() => navigate('/login')}
-            >
-              Login
-            </Button>
+            <Button onClick={() => navigate('/login')}>Login</Button>
           )}
         </div>
       </div>
+
+      {/* Mobile Navigation */}
+      {isMobile && menuOpen && user && (
+        <div className="md:hidden border-t">
+          <div className="container py-3">
+            <nav className="flex flex-col space-y-3">
+              {filteredMenuItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary flex items-center px-3 py-2 rounded-md",
+                    location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+                      ? "bg-muted text-primary"
+                      : "text-muted-foreground"
+                  )}
+                  onClick={closeMenu}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              ))}
+              <div
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary flex items-center px-3 py-2 rounded-md cursor-pointer"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </div>
+            </nav>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
