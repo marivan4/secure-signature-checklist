@@ -20,6 +20,10 @@ import InvoiceForm from "./components/Invoice/InvoiceForm";
 import InvoiceDetail from "./components/Invoice/InvoiceDetail";
 import InvoiceSend from "./components/Invoice/InvoiceSend";
 import InvoiceExport from "./components/Invoice/InvoiceExport";
+import Clients from "./pages/Clients";
+import Trackers from "./pages/Trackers";
+import Marketplace from "./pages/Marketplace";
+import Insurance from "./pages/Insurance";
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -76,6 +80,46 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } 
+    />
+    
+    {/* Client Routes */}
+    <Route 
+      path="/clients" 
+      element={
+        <ProtectedRoute>
+          <Clients />
+        </ProtectedRoute>
+      } 
+    />
+    
+    {/* Tracker Routes */}
+    <Route 
+      path="/trackers" 
+      element={
+        <ProtectedRoute>
+          <Trackers />
+        </ProtectedRoute>
+      } 
+    />
+    
+    {/* Marketplace Routes */}
+    <Route 
+      path="/marketplace" 
+      element={
+        <ProtectedRoute>
+          <Marketplace />
+        </ProtectedRoute>
+      } 
+    />
+    
+    {/* Insurance Routes */}
+    <Route 
+      path="/insurance" 
+      element={
+        <ProtectedRoute>
+          <Insurance />
         </ProtectedRoute>
       } 
     />
