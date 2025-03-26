@@ -46,6 +46,8 @@ const invoiceSchema = z.object({
   dueDate: z.string().min(1, 'Data de vencimento é obrigatória'),
   paidDate: z.string().optional(),
   checklistId: z.string().optional(),
+  email: z.string().email('Email inválido').optional(),
+  phone: z.string().optional(),
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
@@ -84,6 +86,8 @@ const InvoiceForm: React.FC = () => {
       dueDate: new Date().toISOString().split('T')[0],
       paidDate: '',
       checklistId: '',
+      email: '',
+      phone: '',
     },
   });
 
@@ -98,6 +102,8 @@ const InvoiceForm: React.FC = () => {
         dueDate: new Date(invoice.dueDate).toISOString().split('T')[0],
         paidDate: invoice.paidDate ? new Date(invoice.paidDate).toISOString().split('T')[0] : '',
         checklistId: invoice.checklistId ? String(invoice.checklistId) : '',
+        email: invoice.email || '',
+        phone: invoice.phone || '',
       });
     }
   }, [invoice, isEditing, form]);
@@ -109,8 +115,13 @@ const InvoiceForm: React.FC = () => {
         ...values,
         amount: Number(values.amount),
         userId: user?.id || 0,
-        status: values.status, // Make sure status is required
+        invoiceNumber: values.invoiceNumber, // Ensure this is included and required
+        description: values.description, // Ensure this is included and required
+        status: values.status, // Ensure this is included and required
+        dueDate: values.dueDate, // Ensure this is included and required
         checklistId: values.checklistId ? Number(values.checklistId) : undefined,
+        email: values.email || undefined,
+        phone: values.phone || undefined,
       };
 
       if (isEditing) {
@@ -270,6 +281,34 @@ const InvoiceForm: React.FC = () => {
                     <FormLabel>Data de Pagamento (Opcional)</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email do Cliente (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="cliente@exemplo.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone do Cliente (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="(99) 99999-9999" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
