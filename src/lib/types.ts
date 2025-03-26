@@ -43,6 +43,8 @@ export interface Invoice {
   dueDate: string;
   paidDate?: string;
   createdAt: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface AuthContextType {

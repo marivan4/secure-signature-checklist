@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -41,6 +41,21 @@ const InvoiceSend: React.FC = () => {
     queryFn: () => getInvoiceById(Number(id)),
   });
 
+  // Set email and phone when invoice data is loaded
+  useEffect(() => {
+    if (invoice) {
+      // Check if email exists on invoice before setting it
+      if (invoice.email) {
+        setEmail(invoice.email);
+      }
+      
+      // Check if phone exists on invoice before setting it
+      if (invoice.phone) {
+        setPhone(invoice.phone.replace(/\D/g, ''));
+      }
+    }
+  }, [invoice]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -64,18 +79,6 @@ const InvoiceSend: React.FC = () => {
       </Card>
     );
   }
-
-  // Preencher email do cliente se disponível no invoice
-  React.useEffect(() => {
-    if (invoice && invoice.email) {
-      setEmail(invoice.email);
-    }
-    
-    // Se tiver telefone, preenche também
-    if (invoice && invoice.phone) {
-      setPhone(invoice.phone.replace(/\D/g, ''));
-    }
-  }, [invoice]);
 
   const handleSendEmail = async () => {
     if (!email) {

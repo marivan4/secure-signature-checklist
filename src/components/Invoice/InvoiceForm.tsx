@@ -64,10 +64,15 @@ const InvoiceForm: React.FC = () => {
   });
 
   // Busca checklists para associar à fatura
-  const { data: checklists = [] } = useQuery({
+  const { data: checklistsResponse = [] } = useQuery({
     queryKey: ['checklists-select'],
     queryFn: () => getChecklists(),
   });
+  
+  // Extrair os checklists da resposta da API
+  const checklists = Array.isArray(checklistsResponse) 
+    ? checklistsResponse 
+    : checklistsResponse.data || [];
 
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
@@ -104,6 +109,7 @@ const InvoiceForm: React.FC = () => {
         ...values,
         amount: Number(values.amount),
         userId: user?.id || 0,
+        status: values.status, // Make sure status is required
         checklistId: values.checklistId ? Number(values.checklistId) : undefined,
       };
 
@@ -184,7 +190,7 @@ const InvoiceForm: React.FC = () => {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="">Nenhum</SelectItem>
-                        {checklists?.data?.map((checklist) => (
+                        {checklists.map((checklist) => (
                           <SelectItem key={checklist.id} value={String(checklist.id)}>
                             {checklist.name} - {checklist.licensePlate || 'Sem placa'}
                           </SelectItem>
