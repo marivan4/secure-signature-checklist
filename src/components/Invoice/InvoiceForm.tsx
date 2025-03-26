@@ -111,14 +111,15 @@ const InvoiceForm: React.FC = () => {
   // Mutação para criar/atualizar fatura
   const mutation = useMutation({
     mutationFn: async (values: InvoiceFormValues) => {
+      // Create a properly typed object that matches the required Invoice fields
       const formattedValues = {
-        ...values,
+        invoiceNumber: values.invoiceNumber,
+        description: values.description,
         amount: Number(values.amount),
+        status: values.status,
+        dueDate: values.dueDate,
         userId: user?.id || 0,
-        invoiceNumber: values.invoiceNumber, // Ensure this is included and required
-        description: values.description, // Ensure this is included and required
-        status: values.status, // Ensure this is included and required
-        dueDate: values.dueDate, // Ensure this is included and required
+        paidDate: values.paidDate || undefined,
         checklistId: values.checklistId ? Number(values.checklistId) : undefined,
         email: values.email || undefined,
         phone: values.phone || undefined,
