@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Tag, ShoppingCart, Star, BookOpen, Package, ShieldCheck } from 'lucide-react';
+import { Search, Tag, ShoppingCart, Star, BookOpen, Package, ShieldCheck, MapPin } from 'lucide-react';
 
 const Marketplace: React.FC = () => {
   // Sample products
