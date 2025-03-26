@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { Checklist } from '@/lib/types';
 
@@ -108,15 +107,21 @@ export const getChecklists = async (userId?: number): Promise<ApiResponse<Checkl
 
     // Em produção, usa a API PHP
     const response = await api.get(`/checklists/get_all.php${userId ? `?userId=${userId}` : ''}`);
+    
+    // Verifica se a resposta é um array, caso contrário retorna um array vazio
+    const data = Array.isArray(response.data) ? response.data : [];
+    
     return {
       success: true,
-      data: response.data
+      data: data
     };
   } catch (error) {
     console.error('Erro ao buscar checklists:', error);
     return {
       success: false,
-      error: 'Falha ao buscar checklists'
+      error: 'Falha ao buscar checklists',
+      // Retorna um array vazio em caso de erro
+      data: []
     };
   }
 };

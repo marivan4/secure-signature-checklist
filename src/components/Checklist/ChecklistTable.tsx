@@ -38,9 +38,14 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({ filterStatus }) => {
           }
           
           setChecklists(filteredData);
+        } else {
+          // Ensure checklists is always initialized as an empty array
+          setChecklists([]);
         }
       } catch (error) {
         toast.error('Failed to fetch checklists');
+        // Ensure checklists is always initialized as an empty array in case of errors
+        setChecklists([]);
       } finally {
         setLoading(false);
       }
@@ -49,7 +54,8 @@ const ChecklistTable: React.FC<ChecklistTableProps> = ({ filterStatus }) => {
     fetchChecklists();
   }, [user, filterStatus]);
   
-  const filteredChecklists = checklists.filter(checklist => {
+  // Make sure checklists is always treated as an array
+  const filteredChecklists = (checklists || []).filter(checklist => {
     if (!searchQuery) return true;
     
     const query = searchQuery.toLowerCase();
