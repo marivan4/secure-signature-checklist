@@ -201,7 +201,8 @@ const InvoiceForm: React.FC = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
+                        {/* Changed the value from empty string to "none" to fix the error */}
+                        <SelectItem value="none">Nenhum</SelectItem>
                         {checklists.map((checklist) => (
                           <SelectItem key={checklist.id} value={String(checklist.id)}>
                             {checklist.name} - {checklist.licensePlate || 'Sem placa'}
