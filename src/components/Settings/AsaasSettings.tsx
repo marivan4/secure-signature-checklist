@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +15,6 @@ import { getAsaasConfig, saveAsaasConfig, initAsaasApi } from '@/services/asaasA
 import { generateMonthlyInvoices, checkOverdueInvoicesAndBlock } from '@/services/invoiceApi';
 import { AsaasConfig } from '@/lib/types';
 
-// Schema de validação para o formulário de configuração do Asaas
 const formSchema = z.object({
   apiKey: z.string().min(8, {
     message: 'O token de acesso deve ter pelo menos 8 caracteres',
@@ -30,7 +28,6 @@ const AsaasSettings: React.FC = () => {
   const [configLoaded, setConfigLoaded] = useState(false);
   const [isSandbox, setIsSandbox] = useState(true);
   
-  // Define o formulário usando react-hook-form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -39,7 +36,6 @@ const AsaasSettings: React.FC = () => {
     },
   });
 
-  // Carrega a configuração do Asaas quando o componente é montado
   useEffect(() => {
     const loadConfig = async () => {
       if (user?.id && (user.role === 'admin' || user.role === 'manager')) {
@@ -54,7 +50,6 @@ const AsaasSettings: React.FC = () => {
             setIsSandbox(config.sandbox);
             setConfigLoaded(true);
             
-            // Inicializa a API do Asaas com a configuração carregada
             initAsaasApi(config);
           }
         } catch (error) {
@@ -69,7 +64,6 @@ const AsaasSettings: React.FC = () => {
     loadConfig();
   }, [user, form]);
 
-  // Função para salvar a configuração do Asaas
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user?.id) return;
     
@@ -87,7 +81,6 @@ const AsaasSettings: React.FC = () => {
         setConfigLoaded(true);
         setIsSandbox(values.sandbox);
         
-        // Inicializa a API do Asaas com a nova configuração
         initAsaasApi(config);
       } else {
         toast.error('Erro ao salvar configuração do Asaas');
@@ -100,7 +93,6 @@ const AsaasSettings: React.FC = () => {
     }
   };
 
-  // Função para gerar mensalidades
   const handleGenerateInvoices = async () => {
     setIsLoading(true);
     try {
@@ -118,7 +110,6 @@ const AsaasSettings: React.FC = () => {
     }
   };
 
-  // Função para verificar faturas vencidas e bloquear veículos
   const handleCheckOverdueInvoices = async () => {
     setIsLoading(true);
     try {
@@ -136,7 +127,6 @@ const AsaasSettings: React.FC = () => {
     }
   };
 
-  // Apenas renderiza o componente se o usuário for admin ou gerente
   if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
     return null;
   }
@@ -153,7 +143,7 @@ const AsaasSettings: React.FC = () => {
       </div>
 
       {isSandbox && (
-        <Alert className="mb-6">
+        <Alert variant="default" className="mb-6">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Modo Sandbox Ativado</AlertTitle>
           <AlertDescription>
