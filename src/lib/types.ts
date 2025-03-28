@@ -1,3 +1,4 @@
+
 export interface User {
   id: number;
   username: string;
@@ -130,6 +131,7 @@ export interface AsaasPayment {
   postalService?: boolean;
   status?: 'PENDING' | 'RECEIVED' | 'CONFIRMED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH' | 'REFUND_REQUESTED' | 'CHARGEBACK_REQUESTED' | 'CHARGEBACK_DISPUTE' | 'AWAITING_CHARGEBACK_REVERSAL' | 'DUNNING_REQUESTED' | 'DUNNING_RECEIVED' | 'AWAITING_RISK_ANALYSIS';
   invoiceUrl?: string;
+  bankSlipUrl?: string; // Added missing property for bank slip URL
   pixQrCodeId?: string;
   invoiceNumber?: string;
   paymentDate?: string;
