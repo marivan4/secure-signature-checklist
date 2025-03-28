@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,14 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    return () => {
+      setMounted(false);
+    };
+  }, []);
   
   // Sample data for the payment status chart
   const paymentStatusData = [
@@ -34,6 +42,10 @@ const Dashboard: React.FC = () => {
     { title: 'Rastreadores', value: 159, recent: '20 cadastros novos (últimos 30 dias)' },
     { title: 'Benefícios Contratados', value: 215, recent: '34 cadastros novos (últimos 30 dias)' }
   ];
+  
+  if (!mounted) {
+    return <div className="container py-6 flex justify-center items-center">Loading...</div>;
+  }
   
   return (
     <div className="container py-6 md:py-10 px-4 max-w-7xl mx-auto animate-fade-in">

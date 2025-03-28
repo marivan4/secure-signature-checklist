@@ -18,8 +18,20 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // Ensure component is mounted before accessing DOM
+  useEffect(() => {
+    setIsMounted(true);
+    
+    return () => {
+      setIsMounted(false);
+    };
+  }, []);
   
   useEffect(() => {
+    if (!isMounted) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -28,6 +40,8 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
     
     // Set canvas dimensions
     const updateCanvasSize = () => {
+      if (!canvas || !ctx) return;
+      
       const parentWidth = canvas.parentElement?.clientWidth || 300;
       canvas.width = parentWidth;
       canvas.height = 200;
@@ -44,14 +58,23 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
     };
     
     updateCanvasSize();
-    window.addEventListener('resize', updateCanvasSize);
+    
+    const handleResize = () => {
+      if (isMounted) {
+        updateCanvasSize();
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
     
     return () => {
-      window.removeEventListener('resize', updateCanvasSize);
+      window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [isMounted]);
   
   const getCoordinates = (event: MouseEvent | TouchEvent): { x: number; y: number } | null => {
+    if (!isMounted) return null;
+    
     const canvas = canvasRef.current;
     if (!canvas) return null;
     
@@ -73,9 +96,12 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
   };
   
   const startDrawing = (event: React.MouseEvent | React.TouchEvent) => {
-    if (disabled) return;
+    if (disabled || !isMounted) return;
     
-    const ctx = canvasRef.current?.getContext('2d');
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
     const coordinates = getCoordinates(event.nativeEvent);
     
     if (!ctx || !coordinates) return;
@@ -88,10 +114,13 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
   };
   
   const draw = (event: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || disabled) return;
+    if (!isDrawing || disabled || !isMounted) return;
     event.preventDefault();
     
-    const ctx = canvasRef.current?.getContext('2d');
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
     const coordinates = getCoordinates(event.nativeEvent);
     
     if (!ctx || !coordinates) return;
@@ -105,9 +134,12 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
   };
   
   const clearSignature = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    if (!isMounted) return;
     
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
     ctx.fillStyle = '#f8f9fa';
@@ -116,7 +148,7 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
   };
   
   const saveSignature = () => {
-    if (!hasSignature) {
+    if (!hasSignature || !isMounted) {
       toast.error('Please provide a signature');
       return;
     }
@@ -131,6 +163,10 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
       toast.error('Failed to save signature');
     }
   };
+  
+  if (!isMounted) {
+    return <div className="h-[200px] bg-muted animate-pulse rounded-md"></div>;
+  }
   
   return (
     <div className={`flex flex-col space-y-4 ${className}`}>

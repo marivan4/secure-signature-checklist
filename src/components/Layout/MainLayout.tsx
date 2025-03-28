@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Layout/Header';
@@ -49,26 +49,32 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
+  
   const isSignaturePage = location.pathname.includes('/signature/');
   const currentPath = location.pathname;
 
   // Make sure component is mounted before rendering to avoid hydration issues
   useEffect(() => {
     setMounted(true);
+    return () => {
+      setMounted(false);
+    };
   }, []);
+
+  // Don't show sidebar on login or index page
+  const shouldShowSidebar = !location.pathname.includes('/login') && location.pathname !== '/';
+
+  const handleLogout = useCallback(() => {
+    if (logout) {
+      logout();
+      navigate('/login');
+    }
+  }, [logout, navigate]);
 
   // Don't show sidebar/header/footer on signature page for a cleaner experience
   if (isSignaturePage) {
     return <div className="min-h-screen animate-fade-in">{children}</div>;
   }
-
-  // Don't show sidebar on login or index page
-  const shouldShowSidebar = !location.pathname.includes('/login') && location.pathname !== '/';
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   if (!mounted) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
