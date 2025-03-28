@@ -1,37 +1,32 @@
-
 import axios from 'axios';
 import { AsaasConfig, AsaasCustomer, AsaasPayment, AsaasWebhookEvent } from '@/lib/types';
+import { 
+  initAsaasApiConfig, 
+  getAsaasBaseUrl, 
+  getAsaasHeaders 
+} from './apiConfig';
 
-let apiKey = '';
-let isSandbox = true;
 let currentUserId: number | null = null;
 
 // Função para inicializar a API Asaas
 export const initAsaasApi = (config: AsaasConfig) => {
-  apiKey = config.apiKey;
-  isSandbox = config.sandbox;
+  initAsaasApiConfig({
+    apiKey: config.apiKey,
+    sandbox: config.sandbox
+  });
   currentUserId = config.userId;
-};
-
-// Função para obter URL base da API Asaas
-const getBaseUrl = () => {
-  return isSandbox
-    ? 'https://api-sandbox.asaas.com/v3'
-    : 'https://api.asaas.com/v3';
 };
 
 // Cria instância do Axios para a API Asaas
 const asaasApi = axios.create({
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: getAsaasHeaders()
 });
 
-// Interceptor para adicionar token de autenticação
+// Interceptor para adicionar token de autenticação e URL base atualizada
 asaasApi.interceptors.request.use(
   (config) => {
-    config.headers['access_token'] = apiKey;
-    config.baseURL = getBaseUrl();
+    config.headers = { ...config.headers, ...getAsaasHeaders() };
+    config.baseURL = getAsaasBaseUrl();
     return config;
   },
   (error) => {

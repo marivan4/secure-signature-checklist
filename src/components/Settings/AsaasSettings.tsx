@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, Shield, RefreshCw, Users } from 'lucide-react';
 import { getAsaasConfig, saveAsaasConfig, initAsaasApi, getAllAsaasConfigs } from '@/services/asaasApi';
 import { generateMonthlyInvoices, checkOverdueInvoicesAndBlock } from '@/services/invoiceApi';
+import { getAsaasBaseUrl } from '@/services/apiConfig';
 import { AsaasConfig } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -105,7 +105,6 @@ const AsaasSettings: React.FC = () => {
         
         initAsaasApi(config);
         
-        // Se for admin, atualiza a lista de todas as configurações
         if (user.role === 'admin') {
           fetchAllConfigs();
         }
@@ -152,6 +151,17 @@ const AsaasSettings: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const renderApiInfo = () => {
+    if (configLoaded) {
+      return (
+        <div className="text-xs text-muted-foreground mt-2">
+          <p>API URL: {getAsaasBaseUrl()}</p>
+        </div>
+      );
+    }
+    return null;
   };
 
   if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
@@ -355,6 +365,7 @@ const AsaasSettings: React.FC = () => {
               <p className="text-xs text-muted-foreground">
                 Última atualização: {new Date().toLocaleString('pt-BR')}
               </p>
+              {renderApiInfo()}
             </CardFooter>
           </Card>
         )}
