@@ -4,11 +4,13 @@ import { AsaasConfig, AsaasCustomer, AsaasPayment, AsaasWebhookEvent } from '@/l
 
 let apiKey = '';
 let isSandbox = true;
+let currentUserId: number | null = null;
 
 // Função para inicializar a API Asaas
 export const initAsaasApi = (config: AsaasConfig) => {
   apiKey = config.apiKey;
   isSandbox = config.sandbox;
+  currentUserId = config.userId;
 };
 
 // Função para obter URL base da API Asaas
@@ -37,9 +39,27 @@ asaasApi.interceptors.request.use(
   }
 );
 
+// Função para verificar se um cliente existe no Asaas por CPF/CNPJ
+export const checkCustomerExists = async (cpfCnpj: string): Promise<boolean> => {
+  try {
+    const customer = await getCustomerByCpfCnpj(cpfCnpj);
+    return !!customer;
+  } catch (error) {
+    console.error('Erro ao verificar se cliente existe no Asaas:', error);
+    return false;
+  }
+};
+
 // Função para criar um cliente no Asaas
 export const createCustomer = async (customer: Omit<AsaasCustomer, 'id'>): Promise<AsaasCustomer | null> => {
   try {
+    // Verificar se o cliente já existe por CPF/CNPJ
+    const existingCustomer = await getCustomerByCpfCnpj(customer.cpfCnpj);
+    if (existingCustomer) {
+      console.log('Cliente já existe no Asaas, retornando dados existentes');
+      return existingCustomer;
+    }
+
     // Em desenvolvimento, simulamos a criação
     if (!import.meta.env.PROD) {
       console.log('[MOCK] Criando cliente no Asaas:', customer);
@@ -61,19 +81,27 @@ export const createCustomer = async (customer: Omit<AsaasCustomer, 'id'>): Promi
 // Função para buscar um cliente por CPF/CNPJ
 export const getCustomerByCpfCnpj = async (cpfCnpj: string): Promise<AsaasCustomer | null> => {
   try {
+    // Limpar formatação do CPF/CNPJ
+    const cleanCpfCnpj = cpfCnpj.replace(/[^\d]/g, '');
+    
     // Em desenvolvimento, simulamos a busca
     if (!import.meta.env.PROD) {
-      console.log('[MOCK] Buscando cliente no Asaas por CPF/CNPJ:', cpfCnpj);
-      return {
-        id: `cus_${Math.random().toString(36).substring(2, 15)}`,
-        name: 'Cliente Simulado',
-        email: 'cliente@exemplo.com',
-        cpfCnpj: cpfCnpj
-      };
+      console.log('[MOCK] Buscando cliente no Asaas por CPF/CNPJ:', cleanCpfCnpj);
+      // Se o CPF/CNPJ for 12345678909, simula cliente existente para testes
+      if (cleanCpfCnpj === '12345678909') {
+        return {
+          id: `cus_${Math.random().toString(36).substring(2, 15)}`,
+          name: 'Cliente Existente Simulado',
+          email: 'cliente.existente@exemplo.com',
+          cpfCnpj: cleanCpfCnpj,
+          personType: 'FISICA'
+        };
+      }
+      return null;
     }
 
     // Em produção, utiliza a API Asaas
-    const response = await asaasApi.get(`/customers?cpfCnpj=${cpfCnpj}`);
+    const response = await asaasApi.get(`/customers?cpfCnpj=${cleanCpfCnpj}`);
     
     // Verifica se encontrou algum cliente
     if (response.data.data && response.data.data.length > 0) {
@@ -296,6 +324,39 @@ export const getAsaasConfig = async (userId: number): Promise<AsaasConfig | null
   } catch (error) {
     console.error('Erro ao buscar configuração do Asaas:', error);
     return null;
+  }
+};
+
+// Função para listar todas as configurações do Asaas (apenas para admin)
+export const getAllAsaasConfigs = async (): Promise<AsaasConfig[]> => {
+  try {
+    // Em desenvolvimento, simulamos a listagem
+    if (!import.meta.env.PROD) {
+      console.log('[MOCK] Listando todas as configurações do Asaas');
+      return [
+        {
+          id: 1,
+          apiKey: '$aact_XXX...XX',
+          sandbox: true,
+          userId: 1,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 2,
+          apiKey: '$aact_YYY...YY',
+          sandbox: true,
+          userId: 2,
+          createdAt: new Date().toISOString()
+        }
+      ];
+    }
+
+    // Em produção, busca no banco de dados via API
+    const response = await axios.get('/api/settings/asaas/all');
+    return response.data || [];
+  } catch (error) {
+    console.error('Erro ao listar configurações do Asaas:', error);
+    return [];
   }
 };
 

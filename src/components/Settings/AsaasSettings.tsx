@@ -11,10 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, Shield, RefreshCw } from 'lucide-react';
-import { getAsaasConfig, saveAsaasConfig, initAsaasApi } from '@/services/asaasApi';
+import { AlertTriangle, Shield, RefreshCw, Users } from 'lucide-react';
+import { getAsaasConfig, saveAsaasConfig, initAsaasApi, getAllAsaasConfigs } from '@/services/asaasApi';
 import { generateMonthlyInvoices, checkOverdueInvoicesAndBlock } from '@/services/invoiceApi';
 import { AsaasConfig } from '@/lib/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const formSchema = z.object({
   apiKey: z.string().min(8, {
@@ -28,6 +29,8 @@ const AsaasSettings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [configLoaded, setConfigLoaded] = useState(false);
   const [isSandbox, setIsSandbox] = useState(true);
+  const [allConfigs, setAllConfigs] = useState<AsaasConfig[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,6 +39,24 @@ const AsaasSettings: React.FC = () => {
       sandbox: true,
     },
   });
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      setIsAdmin(true);
+      fetchAllConfigs();
+    }
+  }, [user]);
+
+  const fetchAllConfigs = async () => {
+    if (user?.role === 'admin') {
+      try {
+        const configs = await getAllAsaasConfigs();
+        setAllConfigs(configs);
+      } catch (error) {
+        console.error('Erro ao buscar todas as configurações do Asaas:', error);
+      }
+    }
+  };
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -83,6 +104,11 @@ const AsaasSettings: React.FC = () => {
         setIsSandbox(values.sandbox);
         
         initAsaasApi(config);
+        
+        // Se for admin, atualiza a lista de todas as configurações
+        if (user.role === 'admin') {
+          fetchAllConfigs();
+        }
       } else {
         toast.error('Erro ao salvar configuração do Asaas');
       }
@@ -223,6 +249,54 @@ const AsaasSettings: React.FC = () => {
             </Form>
           </CardContent>
         </Card>
+
+        {isAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Configurações de Administradores
+              </CardTitle>
+              <CardDescription>
+                Visualize as configurações do Asaas para todos os administradores do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Ambiente</TableHead>
+                    <TableHead>API Key</TableHead>
+                    <TableHead>Data de Criação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allConfigs.length > 0 ? (
+                    allConfigs.map((config) => (
+                      <TableRow key={config.id}>
+                        <TableCell>{config.id}</TableCell>
+                        <TableCell>Admin #{config.userId}</TableCell>
+                        <TableCell>{config.sandbox ? 'Sandbox' : 'Produção'}</TableCell>
+                        <TableCell>
+                          {config.apiKey.substring(0, 8)}...{config.apiKey.substring(config.apiKey.length - 8)}
+                        </TableCell>
+                        <TableCell>{new Date(config.createdAt || '').toLocaleDateString('pt-BR')}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center">
+                        Nenhuma configuração encontrada
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {configLoaded && (
           <Card>

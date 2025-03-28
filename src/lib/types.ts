@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: number;
   username: string;
@@ -105,6 +106,13 @@ export interface AsaasCustomer {
   municipalInscription?: string;
   stateInscription?: string;
   observations?: string;
+  city?: string;
+  cityName?: string;
+  state?: string;
+  personType?: 'FISICA' | 'JURIDICA';
+  deleted?: boolean;
+  foreignCustomer?: boolean;
+  dateCreated?: string;
 }
 
 export interface AsaasPayment {
@@ -203,3 +211,4 @@ export interface Plan {
   durationMonths: number;
   color: string;
 }
+
