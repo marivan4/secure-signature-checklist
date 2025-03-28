@@ -13,7 +13,9 @@ import {
   Shield, 
   Settings,
   ChevronRight,
-  LogOut 
+  LogOut,
+  CreditCard,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -114,6 +116,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 label="Financeiro" 
                 href="/invoices" 
                 active={currentPath.startsWith('/invoices')} 
+              />
+              <SidebarItem 
+                icon={CreditCard} 
+                label="Planos" 
+                href="/plans" 
+                active={currentPath.startsWith('/plans')} 
+              />
+              <SidebarItem 
+                icon={FileText} 
+                label="Nova Fatura" 
+                href="/invoices/new" 
+                active={currentPath === '/invoices/new'} 
               />
               <SidebarItem 
                 icon={Home} 

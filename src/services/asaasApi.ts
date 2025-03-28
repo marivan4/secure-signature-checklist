@@ -98,7 +98,7 @@ export const createPayment = async (payment: Omit<AsaasPayment, 'id'>): Promise<
         id: `pay_${Math.random().toString(36).substring(2, 15)}`,
         status: 'PENDING',
         invoiceUrl: 'https://sandbox.asaas.com/i/123456789',
-        bankSlipUrl: 'https://sandbox.asaas.com/b/123456789',
+        bankSlipUrl: 'https://sandbox.asaas.com/b/pdf/123456789',
         invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`
       };
     }
@@ -127,7 +127,7 @@ export const getPaymentById = async (id: string): Promise<AsaasPayment | null> =
         description: 'Mensalidade de rastreamento',
         status: 'PENDING',
         invoiceUrl: 'https://sandbox.asaas.com/i/123456789',
-        bankSlipUrl: 'https://sandbox.asaas.com/b/123456789',
+        bankSlipUrl: 'https://sandbox.asaas.com/b/pdf/123456789',
         invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`
       };
     }
@@ -138,6 +138,103 @@ export const getPaymentById = async (id: string): Promise<AsaasPayment | null> =
   } catch (error) {
     console.error('Erro ao buscar pagamento no Asaas:', error);
     return null;
+  }
+};
+
+// Nova função para listar todos os pagamentos do Asaas
+export const getAllPayments = async (): Promise<AsaasPayment[]> => {
+  try {
+    // Em desenvolvimento, simulamos a listagem
+    if (!import.meta.env.PROD) {
+      console.log('[MOCK] Listando todos os pagamentos no Asaas');
+      
+      // Simula uma lista de pagamentos
+      return [
+        {
+          id: `pay_${Math.random().toString(36).substring(2, 15)}`,
+          customer: `cus_000006537472`,
+          billingType: 'BOLETO',
+          value: 100.00,
+          dueDate: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0],
+          description: 'Mensalidade de rastreamento - Plano Básico',
+          status: 'OVERDUE',
+          invoiceUrl: 'https://sandbox.asaas.com/i/123456789',
+          bankSlipUrl: 'https://sandbox.asaas.com/b/pdf/123456789',
+          invoiceNumber: `07764376`
+        },
+        {
+          id: `pay_${Math.random().toString(36).substring(2, 15)}`,
+          customer: `cus_000006537472`,
+          billingType: 'PIX',
+          value: 100.00,
+          dueDate: new Date(new Date().setDate(new Date().getDate())).toISOString().split('T')[0],
+          description: 'Mensalidade de rastreamento - Plano Premium',
+          status: 'RECEIVED',
+          invoiceUrl: 'https://sandbox.asaas.com/i/123456789',
+          bankSlipUrl: null,
+          invoiceNumber: `07764377`,
+          paymentDate: new Date().toISOString().split('T')[0]
+        },
+        {
+          id: `pay_${Math.random().toString(36).substring(2, 15)}`,
+          customer: `cus_000006537472`,
+          billingType: 'PIX',
+          value: 100.00,
+          dueDate: new Date(new Date().setDate(new Date().getDate() + 10)).toISOString().split('T')[0],
+          description: 'Mensalidade de rastreamento - Plano Empresarial',
+          status: 'PENDING',
+          invoiceUrl: 'https://sandbox.asaas.com/i/123456789',
+          bankSlipUrl: null,
+          invoiceNumber: `07764378`
+        }
+      ];
+    }
+
+    // Em produção, utiliza a API Asaas
+    const response = await asaasApi.get('/payments');
+    return response.data.data || [];
+  } catch (error) {
+    console.error('Erro ao listar pagamentos no Asaas:', error);
+    return [];
+  }
+};
+
+// Função para gerar um QR code PIX para um pagamento
+export const getPixQrCode = async (paymentId: string): Promise<{encodedImage: string, payload: string} | null> => {
+  try {
+    // Em desenvolvimento, simulamos a geração
+    if (!import.meta.env.PROD) {
+      console.log('[MOCK] Gerando QR code PIX para o pagamento:', paymentId);
+      return {
+        encodedImage: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAABlBMVEX///8AAABVwtN+AAABA0lEQVR42uyYwY3DMAxEHyEBF+ECXIBLSCkpxSW4BBfgAgLkcBlkkVUg+WgYsOeUXxs09PDJsighDMMwDMMwDMMwDMMwDMMwTAkTM9NARNkRJZMkdkTBRObMVHYkM8uy69h3AMjR/tElc4BkB1z6fHbcMR0gd8n8NHLYyL6vhYgTZODZcSFdA5O6pFxiogVEmXeBe6D1SXcVoA+p642qAZ1dku5VV/VLUgUY40JMkqaGWfbEpAok8N16psi+N5AqEECWXLtE9PdXJRWAeA6sN+EccxSuBLwlJnlxvUKuQakCjD+HzM7D5XshDwDUJFk64G3iKgGlSFYA+FfAz0rAP2YYhmEYhmEYhmGYO+YLvUww0Hvd45sAAAAASUVORK5CYII=',
+        payload: '00020126580014BR.GOV.BCB.PIX0136123e4567-e89b-12d3-a456-426655440000520400005303986540510.005802BR5913Teste Sandbox6008Brasilia62070503***63041D2D'
+      };
+    }
+
+    // Em produção, utiliza a API Asaas
+    const response = await asaasApi.get(`/payments/${paymentId}/pixQrCode`);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao gerar QR code PIX para o pagamento:', error);
+    return null;
+  }
+};
+
+// Função para reenviar uma cobrança por e-mail
+export const resendPaymentEmail = async (paymentId: string): Promise<boolean> => {
+  try {
+    // Em desenvolvimento, simulamos o reenvio
+    if (!import.meta.env.PROD) {
+      console.log('[MOCK] Reenviando cobrança por e-mail para o pagamento:', paymentId);
+      return true;
+    }
+
+    // Em produção, utiliza a API Asaas
+    await asaasApi.post(`/payments/${paymentId}/notifications`);
+    return true;
+  } catch (error) {
+    console.error('Erro ao reenviar cobrança por e-mail:', error);
+    return false;
   }
 };
 
@@ -186,7 +283,7 @@ export const getAsaasConfig = async (userId: number): Promise<AsaasConfig | null
       console.log('[MOCK] Buscando configuração do Asaas para o usuário:', userId);
       return {
         id: 1,
-        apiKey: 'seu_token_sandbox',
+        apiKey: '$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjUzZWNjMzUzLTVmM2UtNGMyZi04MGRjLTljNmU4NGU3NTlmMjo6JGFhY2hfYmU4ZGU2NjQtYTU4Yy00NjA0LTgzY2EtNzYxNjE0MDM0MGQ4',
         sandbox: true,
         userId: userId,
         createdAt: new Date().toISOString()

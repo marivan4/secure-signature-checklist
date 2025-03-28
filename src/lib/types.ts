@@ -1,4 +1,3 @@
-
 export interface User {
   id: number;
   username: string;
@@ -126,6 +125,26 @@ export interface AsaasPayment {
   invoiceUrl?: string;
   bankSlipUrl?: string;
   invoiceNumber?: string;
+  paymentDate?: string;
+  clientPaymentDate?: string;
+  confirmedDate?: string;
+  pixTransaction?: string;
+  pixQrCodeId?: string;
+  creditDate?: string;
+  estimatedCreditDate?: string;
+  transactionReceiptUrl?: string;
+  nossoNumero?: string;
+  bankSlipUrl?: string;
+  lastInvoiceViewedDate?: string;
+  lastBankSlipViewedDate?: string;
+  canBePaidAfterDueDate?: boolean;
+  originalDueDate?: string;
+  originalValue?: number;
+  interestValue?: number;
+  netValue?: number;
+  deleted?: boolean;
+  anticipated?: boolean;
+  anticipable?: boolean;
 }
 
 export interface AsaasDiscount {
@@ -173,4 +192,14 @@ export interface AsaasWebhookEvent {
     invoiceNumber: string;
     externalReference?: string;
   };
+}
+
+export interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  features: string[];
+  durationMonths: number;
+  color: string;
 }
