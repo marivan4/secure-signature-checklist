@@ -1,14 +1,17 @@
 
 import { useLocation, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const NotFound = () => {
   const location = useLocation();
   const [isMounted, setIsMounted] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    abortControllerRef.current = new AbortController();
     setIsMounted(true);
     
+    // Log the error in a safe way
     console.error(
       "404 Error: User attempted to access non-existent route:",
       location.pathname
@@ -16,11 +19,14 @@ const NotFound = () => {
     
     return () => {
       setIsMounted(false);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, [location.pathname]);
 
   if (!isMounted) {
-    return null;
+    return <div className="min-h-screen flex items-center justify-center bg-gray-100">Loading...</div>;
   }
 
   return (

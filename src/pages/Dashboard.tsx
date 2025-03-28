@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -15,11 +15,19 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>('all');
   const [mounted, setMounted] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   useEffect(() => {
+    // Create abort controller for cancelling any pending requests
+    abortControllerRef.current = new AbortController();
     setMounted(true);
+    
     return () => {
       setMounted(false);
+      // Cancel any pending requests on unmount
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, []);
   
@@ -42,6 +50,13 @@ const Dashboard: React.FC = () => {
     { title: 'Rastreadores', value: 159, recent: '20 cadastros novos (últimos 30 dias)' },
     { title: 'Benefícios Contratados', value: 215, recent: '34 cadastros novos (últimos 30 dias)' }
   ];
+  
+  const handleNavigate = (path: string) => {
+    // Only navigate if component is still mounted
+    if (mounted) {
+      navigate(path);
+    }
+  };
   
   if (!mounted) {
     return <div className="container py-6 flex justify-center items-center">Loading...</div>;
@@ -69,7 +84,7 @@ const Dashboard: React.FC = () => {
           </div>
           
           {user?.role === 'admin' && (
-            <Button onClick={() => navigate('/checklist/new')} className="flex items-center gap-2">
+            <Button onClick={() => handleNavigate('/checklist/new')} className="flex items-center gap-2">
               <PlusCircle className="h-4 w-4" />
               Novo Contrato
             </Button>
@@ -88,7 +103,7 @@ const Dashboard: React.FC = () => {
       {/* Statistics Cards - First Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {statistics.slice(0, 4).map((stat, index) => (
-          <Card key={index} className="shadow-sm">
+          <Card key={`stat-first-row-${index}`} className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <div className="h-4 w-4 text-muted-foreground">•••</div>
@@ -143,7 +158,7 @@ const Dashboard: React.FC = () => {
       {/* Statistics Cards - Second Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {statistics.slice(4).map((stat, index) => (
-          <Card key={index} className="shadow-sm">
+          <Card key={`stat-second-row-${index}`} className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <div className="h-4 w-4 text-muted-foreground">•••</div>
