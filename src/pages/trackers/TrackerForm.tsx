@@ -40,6 +40,7 @@ const TrackerForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   
   // Inicializa o formulário
   const form = useForm<TrackerFormValues>({
@@ -54,13 +55,28 @@ const TrackerForm: React.FC = () => {
     },
   });
 
+  useEffect(() => {
+    setIsMounted(true);
+    return () => {
+      setIsMounted(false);
+    };
+  }, []);
+
   // Carrega os dados do rastreador se estiver em modo de edição
   useEffect(() => {
-    if (isEditMode) {
+    if (!isMounted || !isEditMode) return;
+    
+    let isActive = true;
+    
+    const loadTrackerData = async () => {
       setIsLoading(true);
-      // Aqui você buscaria os dados do rastreador pelo ID
-      // Simularemos com um delay e dados fictícios
-      setTimeout(() => {
+      try {
+        // Aqui você buscaria os dados do rastreador pelo ID
+        // Simularemos com um delay e dados fictícios
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (!isActive) return;
+        
         const trackerData: Tracker = {
           id: Number(id),
           userId: 1,
@@ -81,18 +97,33 @@ const TrackerForm: React.FC = () => {
           notes: trackerData.notes,
           installationDate: trackerData.installationDate
         });
-        
+      } catch (error) {
+        if (!isActive) return;
+        console.error('Erro ao carregar dados do rastreador:', error);
+        toast.error('Erro ao carregar dados do rastreador');
+      } finally {
+        if (!isActive) return;
         setIsLoading(false);
-      }, 500);
-    }
-  }, [form, id, isEditMode]);
+      }
+    };
+    
+    loadTrackerData();
+    
+    return () => {
+      isActive = false;
+    };
+  }, [form, id, isEditMode, isMounted]);
 
   const onSubmit = async (values: TrackerFormValues) => {
+    if (!isMounted) return;
+    
     setIsLoading(true);
     try {
       // Aqui você implementaria a lógica de API para salvar o rastreador
       // Simulando um delay de processamento
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (!isMounted) return;
       
       console.log('Dados do rastreador enviados:', values);
       
@@ -105,12 +136,20 @@ const TrackerForm: React.FC = () => {
       // Redireciona para a lista de rastreadores após salvar
       navigate('/trackers');
     } catch (error) {
+      if (!isMounted) return;
+      
       console.error('Erro ao salvar rastreador:', error);
       toast.error('Erro ao salvar rastreador. Por favor, tente novamente.');
     } finally {
+      if (!isMounted) return;
+      
       setIsLoading(false);
     }
   };
+  
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto animate-fade-in">

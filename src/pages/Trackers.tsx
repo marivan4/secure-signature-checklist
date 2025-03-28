@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 const Trackers: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [mounted, setMounted] = useState(false);
   
   // Sample trackers data
   const trackers = [
@@ -20,6 +21,15 @@ const Trackers: React.FC = () => {
     { id: 4, imei: '789012345678901', model: 'GT06N', client: 'Ana Costa', vehicle: 'Fiat Uno', licensePlate: 'JKL-3456', status: 'maintenance', lastUpdate: '5 dias atrás' },
     { id: 5, imei: '654321098765432', model: 'TK103B', client: 'Carlos Pereira', vehicle: 'Chevrolet Onix', licensePlate: 'MNO-7890', status: 'active', lastUpdate: '1 hora atrás' },
   ];
+  
+  // Use useEffect to safely handle component mounting
+  useEffect(() => {
+    setMounted(true);
+    
+    return () => {
+      setMounted(false);
+    };
+  }, []);
   
   // Filter trackers based on search query
   const filteredTrackers = trackers.filter(tracker => 
@@ -43,6 +53,10 @@ const Trackers: React.FC = () => {
         return <Badge variant="outline">Desconhecido</Badge>;
     }
   };
+  
+  if (!mounted) {
+    return <div className="container py-6 md:py-10 px-4 max-w-7xl mx-auto">Carregando...</div>;
+  }
   
   return (
     <div className="container py-6 md:py-10 px-4 max-w-7xl mx-auto animate-fade-in">
@@ -134,22 +148,30 @@ const Trackers: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTrackers.map((tracker) => (
-                <TableRow key={tracker.id}>
-                  <TableCell className="font-medium">{tracker.imei}</TableCell>
-                  <TableCell>{tracker.model}</TableCell>
-                  <TableCell>{tracker.client}</TableCell>
-                  <TableCell>{tracker.vehicle}</TableCell>
-                  <TableCell>{tracker.licensePlate}</TableCell>
-                  <TableCell>{getStatusBadge(tracker.status)}</TableCell>
-                  <TableCell>{tracker.lastUpdate}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/trackers/${tracker.id}`)}>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+              {filteredTrackers.length > 0 ? (
+                filteredTrackers.map((tracker) => (
+                  <TableRow key={`tracker-${tracker.id}`}>
+                    <TableCell className="font-medium">{tracker.imei}</TableCell>
+                    <TableCell>{tracker.model}</TableCell>
+                    <TableCell>{tracker.client}</TableCell>
+                    <TableCell>{tracker.vehicle}</TableCell>
+                    <TableCell>{tracker.licensePlate}</TableCell>
+                    <TableCell>{getStatusBadge(tracker.status)}</TableCell>
+                    <TableCell>{tracker.lastUpdate}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/trackers/${tracker.id}`)}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                    Nenhum rastreador encontrado.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
