@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,8 +38,8 @@ const Insurance: React.FC = () => {
     }
   ];
   
-  // Sample client insurance policies
-  const clientPolicies = [
+  // Sample client insurance policies - ensure consistent immutable data structure 
+  const [clientPolicies] = useState([
     {
       id: 101,
       client: 'João Silva',
@@ -73,10 +73,10 @@ const Insurance: React.FC = () => {
       status: 'pending',
       monthlyCost: 49.90
     }
-  ];
+  ]);
   
-  // Sample claims
-  const claims = [
+  // Sample claims - ensure consistent immutable data structure
+  const [claims] = useState([
     {
       id: 201,
       client: 'João Silva',
@@ -97,20 +97,20 @@ const Insurance: React.FC = () => {
       status: 'pending',
       amount: 'R$ 5.000,00'
     }
-  ];
+  ]);
   
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Ativo</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Ativo</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pendente</Badge>;
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pendente</Badge>;
       case 'canceled':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Cancelado</Badge>;
+        return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Cancelado</Badge>;
       case 'approved':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Aprovado</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Aprovado</Badge>;
       case 'denied':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Negado</Badge>;
+        return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Negado</Badge>;
       default:
         return <Badge variant="outline">Desconhecido</Badge>;
     }
@@ -181,7 +181,7 @@ const Insurance: React.FC = () => {
           <Card key={plan.id} className={`h-full flex flex-col ${plan.popular ? 'border-primary' : ''}`}>
             <CardHeader>
               {plan.popular && (
-                <Badge className="w-fit mb-2 bg-primary">Mais Popular</Badge>
+                <Badge variant="default" className="w-fit mb-2 bg-primary">Mais Popular</Badge>
               )}
               <CardTitle>{plan.name}</CardTitle>
               <CardDescription>{plan.description}</CardDescription>

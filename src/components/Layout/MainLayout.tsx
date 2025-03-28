@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Layout/Header';
@@ -48,8 +48,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
   const isSignaturePage = location.pathname.includes('/signature/');
   const currentPath = location.pathname;
+
+  // Make sure component is mounted before rendering to avoid hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Don't show sidebar/header/footer on signature page for a cleaner experience
   if (isSignaturePage) {
@@ -63,6 +69,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     logout();
     navigate('/login');
   };
+
+  if (!mounted) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -112,7 +122,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 active={currentPath.startsWith('/insurance')} 
               />
               
-              {user.role === 'admin' && (
+              {user && user.role === 'admin' && (
                 <SidebarItem 
                   icon={Settings} 
                   label="Administração" 
