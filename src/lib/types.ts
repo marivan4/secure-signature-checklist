@@ -45,6 +45,8 @@ export interface Invoice {
   createdAt: string;
   email?: string;
   phone?: string;
+  asaasId?: string; // ID do pagamento no Asaas
+  blocked?: boolean; // Se o veículo está bloqueado por falta de pagamento
 }
 
 export interface AuthContextType {
@@ -74,4 +76,101 @@ export interface WhatsAppConfig {
   baseUrl: string;
   userId: number;
   createdAt: string;
+}
+
+// Interfaces para o Asaas
+export interface AsaasConfig {
+  id?: number;
+  apiKey: string;
+  sandbox: boolean;
+  userId: number;
+  createdAt?: string;
+}
+
+export interface AsaasCustomer {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  mobilePhone?: string;
+  cpfCnpj: string;
+  postalCode?: string;
+  address?: string;
+  addressNumber?: string;
+  complement?: string;
+  province?: string;
+  externalReference?: string;
+  notificationDisabled?: boolean;
+  additionalEmails?: string;
+  municipalInscription?: string;
+  stateInscription?: string;
+  observations?: string;
+}
+
+export interface AsaasPayment {
+  id?: string;
+  customer: string;
+  billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' | 'TRANSFER' | 'DEPOSIT' | 'UNDEFINED';
+  value: number;
+  dueDate: string;
+  description?: string;
+  externalReference?: string;
+  installmentCount?: number;
+  totalValue?: number;
+  installmentValue?: number;
+  discount?: AsaasDiscount;
+  interest?: AsaasInterest;
+  fine?: AsaasFine;
+  postalService?: boolean;
+  status?: 'PENDING' | 'RECEIVED' | 'CONFIRMED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH' | 'REFUND_REQUESTED' | 'CHARGEBACK_REQUESTED' | 'CHARGEBACK_DISPUTE' | 'AWAITING_CHARGEBACK_REVERSAL' | 'DUNNING_REQUESTED' | 'DUNNING_RECEIVED' | 'AWAITING_RISK_ANALYSIS';
+  invoiceUrl?: string;
+  bankSlipUrl?: string;
+  invoiceNumber?: string;
+}
+
+export interface AsaasDiscount {
+  value: number;
+  dueDateLimitDays?: number;
+  type: 'FIXED' | 'PERCENTAGE';
+}
+
+export interface AsaasInterest {
+  value: number;
+}
+
+export interface AsaasFine {
+  value: number;
+}
+
+export interface Vehicle {
+  id: number;
+  userId: number;
+  checklistId?: number;
+  model: string;
+  plate: string;
+  year?: string;
+  color?: string;
+  trackerModel: string;
+  trackerImei: string;
+  monthlyFee: number;
+  installationDate: string;
+  status: 'active' | 'inactive' | 'blocked';
+  createdAt: string;
+}
+
+export interface AsaasWebhookEvent {
+  event: string;
+  payment: {
+    id: string;
+    customer: string;
+    value: number;
+    netValue: number;
+    billingType: string;
+    status: string;
+    dueDate: string;
+    paymentDate?: string;
+    invoiceUrl: string;
+    invoiceNumber: string;
+    externalReference?: string;
+  };
 }

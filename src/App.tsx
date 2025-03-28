@@ -15,6 +15,7 @@ import ChecklistForm from "@/components/Checklist/ChecklistForm";
 import ChecklistDetail from "@/components/Checklist/ChecklistDetail";
 import InvoicePage from "./pages/Invoices";
 import WhatsAppSettings from "./components/WhatsApp/WhatsAppSettings";
+import AsaasSettings from "./components/Settings/AsaasSettings";
 import { useState } from "react";
 import InvoiceForm from "./components/Invoice/InvoiceForm";
 import InvoiceDetail from "./components/Invoice/InvoiceDetail";
@@ -217,13 +218,24 @@ const AppRoutes = () => (
       } 
     />
     
-    {/* WhatsApp Routes */}
+    {/* Settings Routes */}
     <Route 
       path="/whatsapp" 
       element={
         <ProtectedRoute>
           <ManagerRoute>
             <WhatsAppSettings />
+          </ManagerRoute>
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/settings/asaas" 
+      element={
+        <ProtectedRoute>
+          <ManagerRoute>
+            <AsaasSettings />
           </ManagerRoute>
         </ProtectedRoute>
       } 
