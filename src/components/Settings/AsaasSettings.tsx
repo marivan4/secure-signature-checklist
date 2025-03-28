@@ -153,7 +153,7 @@ const AsaasSettings: React.FC = () => {
       </div>
 
       {isSandbox && (
-        <Alert variant="warning" className="mb-6">
+        <Alert className="mb-6">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Modo Sandbox Ativado</AlertTitle>
           <AlertDescription>
