@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -60,9 +60,24 @@ const NewClient: React.FC = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  
+  // Set component as mounted and handle cleanup
+  useEffect(() => {
+    const controller = new AbortController();
+    setIsMounted(true);
+    
+    return () => {
+      setIsMounted(false);
+      controller.abort(); // Abort any pending fetch requests
+    };
+  }, []);
   
   // Obtém o plano selecionado da URL
   useEffect(() => {
+    if (!isMounted) return;
+    
     const params = new URLSearchParams(location.search);
     const plan = params.get('plan');
     if (plan) {
@@ -71,7 +86,7 @@ const NewClient: React.FC = () => {
       // Se não houver plano selecionado, redireciona para a página de planos
       navigate('/plans');
     }
-  }, [location, navigate]);
+  }, [location, navigate, isMounted]);
 
   // Lista de planos disponíveis
   const plans: Plan[] = [
@@ -147,7 +162,7 @@ const NewClient: React.FC = () => {
   });
 
   const handleSubmit = async (values: ClientFormValues) => {
-    if (!selectedPlan) {
+    if (!selectedPlan || !isMounted) {
       toast.error('Plano não encontrado. Por favor, selecione um plano para continuar.');
       return;
     }
@@ -191,15 +206,25 @@ const NewClient: React.FC = () => {
       }
 
       // 3. Redireciona para a página de sucesso
-      navigate(`/invoices/${payment.id}`, { state: { newClient: true, payment } });
-      toast.success('Cliente cadastrado com sucesso!');
+      if (isMounted) {
+        navigate(`/invoices/${payment.id}`, { state: { newClient: true, payment } });
+        toast.success('Cliente cadastrado com sucesso!');
+      }
     } catch (error) {
       console.error('Erro ao cadastrar cliente:', error);
-      toast.error('Erro ao cadastrar cliente. Por favor, tente novamente.');
+      if (isMounted) {
+        toast.error('Erro ao cadastrar cliente. Por favor, tente novamente.');
+      }
     } finally {
-      setIsLoading(false);
+      if (isMounted) {
+        setIsLoading(false);
+      }
     }
   };
+
+  if (!isMounted) {
+    return <div className="container py-6 animate-fade-in">Carregando...</div>;
+  }
 
   if (!selectedPlan) {
     return (
@@ -274,7 +299,7 @@ const NewClient: React.FC = () => {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                <form ref={formRef} onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                   <Tabs defaultValue="personal" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="personal" className="flex items-center">
@@ -494,8 +519,14 @@ const NewClient: React.FC = () => {
                       disabled={isLoading}
                       className="w-full sm:w-auto"
                     >
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Cadastrar e Gerar Fatura
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processando...
+                        </>
+                      ) : (
+                        "Cadastrar e Gerar Fatura"
+                      )}
                     </Button>
                   </div>
                 </form>
