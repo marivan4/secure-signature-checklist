@@ -25,7 +25,8 @@ import {
   QrCode, 
   FileText,
   BuildingIcon,
-  UserIcon
+  UserIcon,
+  Check
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { createCustomer, createPayment } from '@/services/asaasApi';

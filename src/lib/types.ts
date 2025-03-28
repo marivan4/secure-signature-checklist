@@ -1,3 +1,4 @@
+
 export interface User {
   id: number;
   username: string;
@@ -134,7 +135,6 @@ export interface AsaasPayment {
   estimatedCreditDate?: string;
   transactionReceiptUrl?: string;
   nossoNumero?: string;
-  bankSlipUrl?: string;
   lastInvoiceViewedDate?: string;
   lastBankSlipViewedDate?: string;
   canBePaidAfterDueDate?: boolean;
