@@ -25,6 +25,10 @@ import Clients from "./pages/Clients";
 import Trackers from "./pages/Trackers";
 import Marketplace from "./pages/Marketplace";
 import Insurance from "./pages/Insurance";
+import Plans from "./pages/Plans";
+import NewClient from "./pages/clients/NewClient";
+import TrackerForm from "./pages/trackers/TrackerForm";
+import TrackerDetail from "./pages/trackers/TrackerDetail";
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -94,6 +98,27 @@ const AppRoutes = () => (
         </ProtectedRoute>
       } 
     />
+
+    <Route 
+      path="/clients/new" 
+      element={
+        <ProtectedRoute>
+          <ManagerRoute>
+            <NewClient />
+          </ManagerRoute>
+        </ProtectedRoute>
+      } 
+    />
+    
+    {/* Plans Routes */}
+    <Route 
+      path="/plans" 
+      element={
+        <ProtectedRoute>
+          <Plans />
+        </ProtectedRoute>
+      } 
+    />
     
     {/* Tracker Routes */}
     <Route 
@@ -101,6 +126,37 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <Trackers />
+        </ProtectedRoute>
+      } 
+    />
+
+    <Route 
+      path="/trackers/new" 
+      element={
+        <ProtectedRoute>
+          <ManagerRoute>
+            <TrackerForm />
+          </ManagerRoute>
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/trackers/edit/:id" 
+      element={
+        <ProtectedRoute>
+          <ManagerRoute>
+            <TrackerForm />
+          </ManagerRoute>
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/trackers/:id" 
+      element={
+        <ProtectedRoute>
+          <TrackerDetail />
         </ProtectedRoute>
       } 
     />

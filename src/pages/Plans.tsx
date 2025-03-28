@@ -1,18 +1,15 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Check, ChevronRight } from 'lucide-react';
-import { toast } from 'sonner';
+import { Check, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Plan } from '@/lib/types';
 
 const Plans: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
+  
   // Lista de planos disponíveis
   const plans: Plan[] = [
     {
@@ -66,87 +63,63 @@ const Plans: React.FC = () => {
   ];
 
   const handleSelectPlan = (planId: string) => {
-    setSelectedPlan(planId);
-  };
-
-  const handleContinue = () => {
-    if (!selectedPlan) {
-      toast.error('Por favor, selecione um plano para continuar.');
-      return;
-    }
-
-    // Redireciona para a página de registro de cliente com o plano selecionado
-    navigate(`/clients/new?plan=${selectedPlan}`);
+    navigate(`/clients/new?plan=${planId}`);
   };
 
   return (
-    <div className="container py-10 animate-fade-in">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold tracking-tight">Escolha o Plano Ideal</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-          Selecione o plano que melhor atende às suas necessidades. Todos os planos incluem monitoramento 24 horas e suporte técnico.
+    <div className="container py-6 md:py-10 px-4 max-w-7xl mx-auto animate-fade-in">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Escolha o Plano Ideal</h1>
+        <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+          Oferecemos planos flexíveis para atender às suas necessidades de rastreamento.
+          Escolha o plano que melhor se adapta à sua frota.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {plans.map((plan) => (
-          <Card 
-            key={plan.id}
-            className={`relative overflow-hidden border-2 transition-all ${
-              selectedPlan === plan.id 
-                ? 'border-primary shadow-lg scale-105' 
-                : 'border-transparent hover:border-primary/20'
-            }`}
-            onClick={() => handleSelectPlan(plan.id)}
-          >
-            {plan.id === 'premium' && (
-              <Badge className="absolute top-4 right-4 bg-purple-500">Mais Popular</Badge>
-            )}
-            
+          <Card key={plan.id} className="flex flex-col h-full">
             <div className={`h-2 w-full ${plan.color}`} />
-            
             <CardHeader>
-              <CardTitle className="text-2xl">{plan.name}</CardTitle>
-              <CardDescription className="text-base">{plan.description}</CardDescription>
+              <CardTitle>{plan.name}</CardTitle>
+              <p className="text-muted-foreground">{plan.description}</p>
             </CardHeader>
-            
-            <CardContent>
+            <CardContent className="flex-grow">
               <div className="mb-4">
-                <span className="text-3xl font-bold">{formatCurrency(plan.price)}</span>
-                <span className="text-muted-foreground">/mês</span>
+                <div className="text-3xl font-bold">{formatCurrency(plan.price)}</div>
+                <p className="text-muted-foreground text-sm">por mês</p>
               </div>
               
-              <ul className="space-y-2 my-6">
+              <ul className="space-y-2">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                    <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center mr-2 flex-shrink-0">
+                      <Check className="h-3 w-3 text-green-500" />
+                    </div>
                     <span>{feature}</span>
                   </li>
                 ))}
               </ul>
             </CardContent>
-            
             <CardFooter>
               <Button 
-                variant={selectedPlan === plan.id ? "default" : "outline"} 
-                className="w-full"
+                className="w-full gap-2" 
                 onClick={() => handleSelectPlan(plan.id)}
               >
-                {selectedPlan === plan.id ? 'Selecionado' : 'Selecionar Plano'}
+                Contratar 
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
-      
-      <div className="flex justify-center mt-12">
-        <Button 
-          size="lg" 
-          onClick={handleContinue}
-          disabled={!selectedPlan}
-          className="gap-2"
-        >
-          Continuar para Cadastro <ChevronRight className="h-4 w-4" />
+
+      <div className="mt-12 text-center">
+        <p className="text-muted-foreground mb-4">
+          Precisa de um plano personalizado para sua empresa?
+        </p>
+        <Button variant="outline" onClick={() => navigate('/contact')}>
+          Entre em contato conosco
         </Button>
       </div>
     </div>
