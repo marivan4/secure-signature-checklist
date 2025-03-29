@@ -16,7 +16,7 @@ import ChecklistDetail from "@/components/Checklist/ChecklistDetail";
 import InvoicePage from "./pages/Invoices";
 import WhatsAppSettings from "./components/WhatsApp/WhatsAppSettings";
 import AsaasSettings from "./components/Settings/AsaasSettings";
-import { useState } from "react";
+import { useState, StrictMode } from "react";
 import InvoiceForm from "./components/Invoice/InvoiceForm";
 import InvoiceDetail from "./components/Invoice/InvoiceDetail";
 import InvoiceSend from "./components/Invoice/InvoiceSend";
@@ -305,22 +305,31 @@ const AppRoutes = () => (
 
 const App = () => {
   // Creating the QueryClient inside the component
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  }));
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <MainLayout>
-              <AppRoutes />
-            </MainLayout>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <BrowserRouter>
+              <MainLayout>
+                <AppRoutes />
+              </MainLayout>
+              <Toaster />
+              <Sonner />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </StrictMode>
   );
 };
 

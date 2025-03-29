@@ -13,9 +13,14 @@ const Index: React.FC = () => {
   useEffect(() => {
     // Create abort controller for cancelling any pending requests
     abortControllerRef.current = new AbortController();
-    setIsMounted(true);
+    
+    // Use a timeout to ensure DOM is fully ready before mounting
+    const timeout = setTimeout(() => {
+      setIsMounted(true);
+    }, 0);
     
     return () => {
+      clearTimeout(timeout);
       setIsMounted(false);
       // Cancel any pending requests on unmount
       if (abortControllerRef.current) {
