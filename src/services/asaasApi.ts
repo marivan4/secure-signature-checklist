@@ -250,6 +250,61 @@ export const getPixQrCode = async (paymentId: string): Promise<{encodedImage: st
   }
 };
 
+// Função para obter a linha digitável do boleto
+export const getBoletoIdentificationField = async (paymentId: string): Promise<string | null> => {
+  try {
+    // Em desenvolvimento, simulamos a linha digitável
+    if (!import.meta.env.PROD) {
+      console.log('[MOCK] Obtendo linha digitável do boleto para o pagamento:', paymentId);
+      return '34191.09008 01234.567890 12345.678901 1 12345678901234';
+    }
+
+    // Em produção, utiliza a API Asaas
+    const response = await asaasApi.get(`/payments/${paymentId}/identificationField`);
+    return response.data.identificationField || null;
+  } catch (error) {
+    console.error('Erro ao obter linha digitável do boleto:', error);
+    return null;
+  }
+};
+
+// Função para cancelar um pagamento
+export const cancelPayment = async (paymentId: string): Promise<boolean> => {
+  try {
+    // Em desenvolvimento, simulamos o cancelamento
+    if (!import.meta.env.PROD) {
+      console.log('[MOCK] Cancelando pagamento:', paymentId);
+      return true;
+    }
+
+    // Em produção, utiliza a API Asaas
+    await asaasApi.delete(`/payments/${paymentId}`);
+    return true;
+  } catch (error) {
+    console.error('Erro ao cancelar pagamento:', error);
+    return false;
+  }
+};
+
+// Função para reembolsar um pagamento
+export const refundPayment = async (paymentId: string, value?: number): Promise<boolean> => {
+  try {
+    // Em desenvolvimento, simulamos o reembolso
+    if (!import.meta.env.PROD) {
+      console.log('[MOCK] Reembolsando pagamento:', paymentId, value ? `valor: ${value}` : 'valor total');
+      return true;
+    }
+
+    // Em produção, utiliza a API Asaas
+    const data = value ? { value } : {};
+    await asaasApi.post(`/payments/${paymentId}/refund`, data);
+    return true;
+  } catch (error) {
+    console.error('Erro ao reembolsar pagamento:', error);
+    return false;
+  }
+};
+
 // Função para reenviar uma cobrança por e-mail
 export const resendPaymentEmail = async (paymentId: string): Promise<boolean> => {
   try {
@@ -265,6 +320,58 @@ export const resendPaymentEmail = async (paymentId: string): Promise<boolean> =>
   } catch (error) {
     console.error('Erro ao reenviar cobrança por e-mail:', error);
     return false;
+  }
+};
+
+// Função para gerar relatório financeiro
+export const generateFinancialReport = async (
+  startDate: string,
+  endDate: string,
+  status?: string
+): Promise<any> => {
+  try {
+    // Em desenvolvimento, simulamos a geração de relatório
+    if (!import.meta.env.PROD) {
+      console.log('[MOCK] Gerando relatório financeiro:', { startDate, endDate, status });
+      return {
+        totalReceived: 1500.00,
+        totalExpected: 2000.00,
+        totalOverdue: 500.00,
+        payments: [
+          {
+            id: `pay_${Math.random().toString(36).substring(2, 15)}`,
+            value: 500.00,
+            status: 'RECEIVED',
+            paymentDate: '2023-10-15',
+            customer: 'Cliente Exemplo'
+          },
+          {
+            id: `pay_${Math.random().toString(36).substring(2, 15)}`,
+            value: 1000.00,
+            status: 'RECEIVED',
+            paymentDate: '2023-10-10',
+            customer: 'Cliente Exemplo 2'
+          },
+          {
+            id: `pay_${Math.random().toString(36).substring(2, 15)}`,
+            value: 500.00,
+            status: 'OVERDUE',
+            dueDate: '2023-09-30',
+            customer: 'Cliente Exemplo 3'
+          }
+        ]
+      };
+    }
+
+    // Em produção, utiliza a API Asaas
+    let url = `/finance/payment/statistics?startDate=${startDate}&endDate=${endDate}`;
+    if (status) url += `&status=${status}`;
+    
+    const response = await asaasApi.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao gerar relatório financeiro:', error);
+    return null;
   }
 };
 

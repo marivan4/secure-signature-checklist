@@ -1,4 +1,3 @@
-
 export interface User {
   id: number;
   username: string;
@@ -168,22 +167,6 @@ export interface AsaasFine {
   value: number;
 }
 
-export interface Vehicle {
-  id: number;
-  userId: number;
-  checklistId?: number;
-  model: string;
-  plate: string;
-  year?: string;
-  color?: string;
-  trackerModel: string;
-  trackerImei: string;
-  monthlyFee: number;
-  installationDate: string;
-  status: 'active' | 'inactive' | 'blocked';
-  createdAt: string;
-}
-
 export interface AsaasWebhookEvent {
   event: string;
   payment: {
@@ -199,6 +182,22 @@ export interface AsaasWebhookEvent {
     invoiceNumber: string;
     externalReference?: string;
   };
+}
+
+export interface Vehicle {
+  id: number;
+  userId: number;
+  checklistId?: number;
+  model: string;
+  plate: string;
+  year?: string;
+  color?: string;
+  trackerModel: string;
+  trackerImei: string;
+  monthlyFee: number;
+  installationDate: string;
+  status: 'active' | 'inactive' | 'blocked';
+  createdAt: string;
 }
 
 export interface Plan {
