@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { AsaasConfig, AsaasCustomer, AsaasPayment, AsaasWebhookEvent } from '@/lib/types';
 import { 
@@ -25,7 +26,13 @@ const asaasApi = axios.create({
 // Interceptor para adicionar token de autenticação e URL base atualizada
 asaasApi.interceptors.request.use(
   (config) => {
-    config.headers = { ...config.headers, ...getAsaasHeaders() };
+    // Corrige o problema com o tipo AxiosRequestHeaders
+    // Adicionando cada header individualmente em vez de substituir o objeto inteiro
+    const headers = getAsaasHeaders();
+    Object.keys(headers).forEach(key => {
+      config.headers.set(key, headers[key]);
+    });
+    
     config.baseURL = getAsaasBaseUrl();
     return config;
   },
