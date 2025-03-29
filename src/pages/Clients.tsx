@@ -1,140 +1,265 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, PlusCircle, User, Phone, Mail, MapPin, MoreHorizontal } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  UserPlus, 
+  Search, 
+  MoreVertical, 
+  Edit, 
+  Trash, 
+  Eye, 
+  Car, 
+  CreditCard,
+  Download, 
+  FileText, 
+  Mail, 
+  Phone, 
+  AlertTriangle, 
+  CheckCircle 
+} from 'lucide-react';
 
-const Clients: React.FC = () => {
+const Clients = () => {
+  const [clients, setClients] = useState([
+    {
+      id: 1,
+      name: 'João da Silva',
+      email: 'joao@example.com',
+      phone: '(11) 99999-9999',
+      status: 'active',
+      createdAt: '2023-01-01',
+      vehicles: 3,
+      invoices: 5,
+      lastInvoiceStatus: 'paid',
+    },
+    {
+      id: 2,
+      name: 'Maria Oliveira',
+      email: 'maria@example.com',
+      phone: '(21) 88888-8888',
+      status: 'inactive',
+      createdAt: '2023-02-15',
+      vehicles: 1,
+      invoices: 2,
+      lastInvoiceStatus: 'pending',
+    },
+    {
+      id: 3,
+      name: 'Carlos Pereira',
+      email: 'carlos@example.com',
+      phone: '(31) 77777-7777',
+      status: 'active',
+      createdAt: '2023-03-20',
+      vehicles: 2,
+      invoices: 3,
+      lastInvoiceStatus: 'overdue',
+    },
+  ]);
+  const [search, setSearch] = useState('');
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Sample clients data
-  const clients = [
-    { id: 1, name: 'João Silva', cpf: '123.456.789-00', phone: '(11) 98765-4321', email: 'joao@example.com', city: 'São Paulo' },
-    { id: 2, name: 'Maria Oliveira', cpf: '987.654.321-00', phone: '(11) 91234-5678', email: 'maria@example.com', city: 'Rio de Janeiro' },
-    { id: 3, name: 'Pedro Santos', cpf: '456.789.123-00', phone: '(21) 99876-5432', email: 'pedro@example.com', city: 'Belo Horizonte' },
-    { id: 4, name: 'Ana Costa', cpf: '789.123.456-00', phone: '(31) 98765-4321', email: 'ana@example.com', city: 'Brasília' },
-    { id: 5, name: 'Carlos Pereira', cpf: '321.654.987-00', phone: '(41) 99876-5432', email: 'carlos@example.com', city: 'Curitiba' },
-  ];
-  
-  // Filter clients based on search query
-  const filteredClients = clients.filter(client => 
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.cpf.includes(searchQuery) ||
-    client.phone.includes(searchQuery) ||
-    client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.city.toLowerCase().includes(searchQuery.toLowerCase())
+  const { user } = useAuth();
+
+  useEffect(() => {
+    // Fetch clients from API here
+    // For now, using mock data
+  }, []);
+
+  const filteredClients = clients.filter(client =>
+    client.name.toLowerCase().includes(search.toLowerCase()) ||
+    client.email.toLowerCase().includes(search.toLowerCase()) ||
+    client.phone.toLowerCase().includes(search.toLowerCase())
   );
-  
+
+  const handleDeleteClient = (id: number) => {
+    setSelectedClientId(id);
+    setOpenDeleteDialog(true);
+  };
+
+  const confirmDeleteClient = () => {
+    if (selectedClientId) {
+      // Delete client from API here
+      // For now, just remove from local state
+      setClients(clients.filter(client => client.id !== selectedClientId));
+      setOpenDeleteDialog(false);
+      setSelectedClientId(null);
+      toast.success('Cliente excluído com sucesso!');
+    }
+  };
+
+  // Render client actions dropdown
+  const renderClientActions = (client: any) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Abrir menu</span>
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => navigate(`/clients/${client.id}`)}>
+          <Eye className="mr-2 h-4 w-4" />
+          Ver detalhes
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate(`/clients/edit/${client.id}`)}>
+          <Edit className="mr-2 h-4 w-4" />
+          Editar cliente
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate(`/clients/${client.id}/vehicles`)}>
+          <Car className="mr-2 h-4 w-4" />
+          Ver veículos
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate(`/clients/${client.id}/charge`)}>
+          <CreditCard className="mr-2 h-4 w-4" />
+          Criar cobrança avulsa
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate(`/invoices?clientId=${client.id}`)}>
+          <FileText className="mr-2 h-4 w-4" />
+          Ver faturas
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => handleDeleteClient(client.id)} className="text-red-600">
+          <Trash className="mr-2 h-4 w-4" />
+          Excluir cliente
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
-    <div className="container py-6 md:py-10 px-4 max-w-7xl mx-auto animate-fade-in">
+    <div className="container py-6 md:py-10 px-4 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
           <p className="text-muted-foreground mt-1">
-            Gerenciamento de todos os clientes cadastrados
+            Gerencie seus clientes e visualize informações detalhadas.
           </p>
         </div>
-        
-        <div className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Pesquisar clientes..."
-              className="pl-9 w-full sm:w-[300px]"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <Button onClick={() => navigate('/clients/new')} className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Novo Cliente
-          </Button>
+        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 w-full md:w-auto">
+          <Input
+            type="search"
+            placeholder="Buscar clientes..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="md:w-64 lg:w-80"
+          />
+          {user?.role === 'admin' || user?.role === 'manager' ? (
+            <Button asChild>
+              <Link to="/clients/new" className="flex items-center space-x-2">
+                <UserPlus className="h-4 w-4" />
+                <span>Adicionar Cliente</span>
+              </Link>
+            </Button>
+          ) : null}
         </div>
       </div>
-      
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">120</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              +10 novos em 30 dias
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ativos</CardTitle>
-            <User className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">98</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              82% do total
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inativos</CardTitle>
-            <User className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">22</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              18% do total
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Clients Table */}
-      <Card className="shadow-sm">
+
+      <Card>
         <CardHeader>
           <CardTitle>Lista de Clientes</CardTitle>
+          <CardDescription>
+            Visualize e gerencie seus clientes cadastrados.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>CPF</TableHead>
-                <TableHead>Telefone</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Cidade</TableHead>
+                <TableHead>Telefone</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredClients.map((client) => (
+              {filteredClients.map(client => (
                 <TableRow key={client.id}>
-                  <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell>{client.cpf}</TableCell>
-                  <TableCell>{client.phone}</TableCell>
+                  <TableCell>{client.name}</TableCell>
                   <TableCell>{client.email}</TableCell>
-                  <TableCell>{client.city}</TableCell>
+                  <TableCell>{client.phone}</TableCell>
+                  <TableCell>
+                    {client.status === 'active' ? (
+                      <Badge variant="outline">Ativo</Badge>
+                    ) : (
+                      <Badge variant="secondary">Inativo</Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/clients/${client.id}`)}>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    {renderClientActions(client)}
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredClients.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    Nenhum cliente encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Excluir Cliente</DialogTitle>
+            <DialogDescription>
+              Tem certeza de que deseja excluir este cliente? Esta ação não pode
+              ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setOpenDeleteDialog(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" variant="destructive" onClick={confirmDeleteClient}>
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,8 +28,8 @@ import Plans from "./pages/Plans";
 import NewClient from "./pages/clients/NewClient";
 import TrackerForm from "./pages/trackers/TrackerForm";
 import TrackerDetail from "./pages/trackers/TrackerDetail";
+import ClientCharge from "./pages/charges/ClientCharge";
 
-// Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, loading } = useAuth();
   
@@ -45,7 +44,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Admin route component
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   
@@ -60,7 +58,6 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Manager or Admin route component
 const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   
@@ -89,7 +86,6 @@ const AppRoutes = () => (
       } 
     />
     
-    {/* Client Routes */}
     <Route 
       path="/clients" 
       element={
@@ -110,7 +106,17 @@ const AppRoutes = () => (
       } 
     />
     
-    {/* Plans Routes */}
+    <Route 
+      path="/clients/:clientId/charge" 
+      element={
+        <ProtectedRoute>
+          <ManagerRoute>
+            <ClientCharge />
+          </ManagerRoute>
+        </ProtectedRoute>
+      } 
+    />
+    
     <Route 
       path="/plans" 
       element={
@@ -120,7 +126,6 @@ const AppRoutes = () => (
       } 
     />
     
-    {/* Tracker Routes */}
     <Route 
       path="/trackers" 
       element={
@@ -161,7 +166,6 @@ const AppRoutes = () => (
       } 
     />
     
-    {/* Marketplace Routes */}
     <Route 
       path="/marketplace" 
       element={
@@ -171,7 +175,6 @@ const AppRoutes = () => (
       } 
     />
     
-    {/* Insurance Routes */}
     <Route 
       path="/insurance" 
       element={
@@ -205,7 +208,6 @@ const AppRoutes = () => (
       } 
     />
     
-    {/* Invoice Routes */}
     <Route 
       path="/invoices" 
       element={
@@ -274,7 +276,6 @@ const AppRoutes = () => (
       } 
     />
     
-    {/* Settings Routes */}
     <Route 
       path="/whatsapp" 
       element={
@@ -304,7 +305,6 @@ const AppRoutes = () => (
 );
 
 const App = () => {
-  // Creating the QueryClient inside the component
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
