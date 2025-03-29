@@ -1,6 +1,8 @@
+
 export interface User {
   id: number;
   username: string;
+  name?: string; // Added name property as optional
   role: 'admin' | 'client' | 'manager';
   createdAt: string;
 }

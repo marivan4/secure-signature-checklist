@@ -14,6 +14,7 @@ import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { createInvoice } from '@/services/invoiceApi';
 import { ArrowLeft, CreditCard, Calendar, CheckCircle } from 'lucide-react';
+import { Invoice } from '@/lib/types';
 
 const formSchema = z.object({
   description: z.string().min(3, { message: 'A descrição deve ter pelo menos 3 caracteres' }),
@@ -78,12 +79,13 @@ const ClientCharge: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Fixed the status type to be a valid literal type
       const invoice = {
         userId: parseInt(clientId),
         description: values.description,
         amount: values.amount,
         dueDate: values.dueDate,
-        status: 'pending',
+        status: 'pending' as const, // Using 'as const' to ensure the type is the literal 'pending'
         invoiceNumber: `INV-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
         email: clientData.email,
         phone: clientData.phone,

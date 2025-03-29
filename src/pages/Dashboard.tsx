@@ -40,7 +40,6 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Add administrative shortcuts section for admins and managers
   const renderAdminShortcuts = () => {
     if (user?.role === 'admin' || user?.role === 'manager') {
       return (
@@ -78,13 +77,13 @@ const Dashboard = () => {
     }
     return null;
   };
-  
+
   return (
     <div className="container py-6 md:py-10 px-4 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Painel de Controle</h1>
         <p className="text-muted-foreground mt-1">
-          Bem-vindo(a), {user?.name || 'Usuário'}! Gerencie suas operações a partir daqui.
+          Bem-vindo(a), {user?.username || 'Usuário'}! Gerencie suas operações a partir daqui.
         </p>
       </div>
       
