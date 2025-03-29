@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,7 @@ const formSchema = z.object({
   description: z.string().min(3, { message: 'A descrição deve ter pelo menos 3 caracteres' }),
   amount: z.coerce.number().min(0.01, { message: 'O valor deve ser maior que zero' }),
   dueDate: z.string().min(1, { message: 'A data de vencimento é obrigatória' }),
-  billingType: z.enum(['BOLETO', 'PIX']),
+  billingType: z.enum(['BOLETO', 'PIX', 'CREDIT_CARD']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -44,8 +43,6 @@ const ClientCharge: React.FC = () => {
   useEffect(() => {
     const fetchClientData = async () => {
       try {
-        // In a real application, you would fetch client data from an API
-        // For now, we'll use mock data
         if (!import.meta.env.PROD) {
           setClientData({
             id: clientId,
@@ -55,7 +52,6 @@ const ClientCharge: React.FC = () => {
             cpfCnpj: '123.456.789-00',
           });
         } else {
-          // Fetch client data from API
           const response = await fetch(`/api/clients/${clientId}`);
           const data = await response.json();
           setClientData(data);
@@ -79,18 +75,19 @@ const ClientCharge: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Fixed the status type to be a valid literal type
       const invoice = {
         userId: parseInt(clientId),
         description: values.description,
         amount: values.amount,
         dueDate: values.dueDate,
-        status: 'pending' as const, // Using 'as const' to ensure the type is the literal 'pending'
+        status: 'pending' as const,
         invoiceNumber: `INV-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
         email: clientData.email,
         phone: clientData.phone,
+        billingType: values.billingType,
       };
 
+      console.log('Enviando dados da fatura:', invoice);
       const result = await createInvoice(invoice);
       
       if (result) {
@@ -258,6 +255,7 @@ const ClientCharge: React.FC = () => {
                       <SelectContent>
                         <SelectItem value="BOLETO">Boleto Bancário</SelectItem>
                         <SelectItem value="PIX">PIX</SelectItem>
+                        <SelectItem value="CREDIT_CARD">Cartão de Crédito</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

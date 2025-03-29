@@ -55,8 +55,11 @@ export const checkCustomerExists = async (cpfCnpj: string): Promise<boolean> => 
 // Função para criar um cliente no Asaas
 export const createCustomer = async (customer: Omit<AsaasCustomer, 'id'>): Promise<AsaasCustomer | null> => {
   try {
+    // Limpar formatação do CPF/CNPJ
+    const cleanCpfCnpj = customer.cpfCnpj.replace(/[^\d]/g, '');
+    
     // Verificar se o cliente já existe por CPF/CNPJ
-    const existingCustomer = await getCustomerByCpfCnpj(customer.cpfCnpj);
+    const existingCustomer = await getCustomerByCpfCnpj(cleanCpfCnpj);
     if (existingCustomer) {
       console.log('Cliente já existe no Asaas, retornando dados existentes');
       return existingCustomer;
@@ -64,15 +67,16 @@ export const createCustomer = async (customer: Omit<AsaasCustomer, 'id'>): Promi
 
     // Em desenvolvimento, simulamos a criação
     if (!import.meta.env.PROD) {
-      console.log('[MOCK] Criando cliente no Asaas:', customer);
+      console.log('[MOCK] Criando cliente no Asaas:', {...customer, cpfCnpj: cleanCpfCnpj});
       return {
         ...customer,
+        cpfCnpj: cleanCpfCnpj,
         id: `cus_${Math.random().toString(36).substring(2, 15)}`
       };
     }
 
-    // Em produção, utiliza a API Asaas
-    const response = await asaasApi.post('/customers', customer);
+    // Em produção, utiliza a API Asaas v3
+    const response = await asaasApi.post('/v3/customers', {...customer, cpfCnpj: cleanCpfCnpj});
     return response.data;
   } catch (error) {
     console.error('Erro ao criar cliente no Asaas:', error);
@@ -102,8 +106,8 @@ export const getCustomerByCpfCnpj = async (cpfCnpj: string): Promise<AsaasCustom
       return null;
     }
 
-    // Em produção, utiliza a API Asaas
-    const response = await asaasApi.get(`/customers?cpfCnpj=${cleanCpfCnpj}`);
+    // Em produção, utiliza a API Asaas v3
+    const response = await asaasApi.get(`/v3/customers?cpfCnpj=${cleanCpfCnpj}`);
     
     // Verifica se encontrou algum cliente
     if (response.data.data && response.data.data.length > 0) {
@@ -133,8 +137,8 @@ export const createPayment = async (payment: Omit<AsaasPayment, 'id'>): Promise<
       };
     }
 
-    // Em produção, utiliza a API Asaas
-    const response = await asaasApi.post('/payments', payment);
+    // Em produção, utiliza a API Asaas v3
+    const response = await asaasApi.post('/v3/payments', payment);
     return response.data;
   } catch (error) {
     console.error('Erro ao criar pagamento no Asaas:', error);
@@ -162,8 +166,8 @@ export const getPaymentById = async (id: string): Promise<AsaasPayment | null> =
       };
     }
 
-    // Em produção, utiliza a API Asaas
-    const response = await asaasApi.get(`/payments/${id}`);
+    // Em produção, utiliza a API Asaas v3
+    const response = await asaasApi.get(`/v3/payments/${id}`);
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar pagamento no Asaas:', error);
@@ -171,7 +175,7 @@ export const getPaymentById = async (id: string): Promise<AsaasPayment | null> =
   }
 };
 
-// Nova função para listar todos os pagamentos do Asaas
+// Função para listar todos os pagamentos do Asaas
 export const getAllPayments = async (): Promise<AsaasPayment[]> => {
   try {
     // Em desenvolvimento, simulamos a listagem
@@ -220,8 +224,8 @@ export const getAllPayments = async (): Promise<AsaasPayment[]> => {
       ];
     }
 
-    // Em produção, utiliza a API Asaas
-    const response = await asaasApi.get('/payments');
+    // Em produção, utiliza a API Asaas v3
+    const response = await asaasApi.get('/v3/payments');
     return response.data.data || [];
   } catch (error) {
     console.error('Erro ao listar pagamentos no Asaas:', error);
@@ -241,8 +245,8 @@ export const getPixQrCode = async (paymentId: string): Promise<{encodedImage: st
       };
     }
 
-    // Em produção, utiliza a API Asaas
-    const response = await asaasApi.get(`/payments/${paymentId}/pixQrCode`);
+    // Em produção, utiliza a API Asaas v3
+    const response = await asaasApi.get(`/v3/payments/${paymentId}/pixQrCode`);
     return response.data;
   } catch (error) {
     console.error('Erro ao gerar QR code PIX para o pagamento:', error);
@@ -259,8 +263,8 @@ export const getBoletoIdentificationField = async (paymentId: string): Promise<s
       return '34191.09008 01234.567890 12345.678901 1 12345678901234';
     }
 
-    // Em produção, utiliza a API Asaas
-    const response = await asaasApi.get(`/payments/${paymentId}/identificationField`);
+    // Em produção, utiliza a API Asaas v3
+    const response = await asaasApi.get(`/v3/payments/${paymentId}/identificationField`);
     return response.data.identificationField || null;
   } catch (error) {
     console.error('Erro ao obter linha digitável do boleto:', error);
@@ -277,8 +281,8 @@ export const cancelPayment = async (paymentId: string): Promise<boolean> => {
       return true;
     }
 
-    // Em produção, utiliza a API Asaas
-    await asaasApi.delete(`/payments/${paymentId}`);
+    // Em produção, utiliza a API Asaas v3
+    await asaasApi.delete(`/v3/payments/${paymentId}`);
     return true;
   } catch (error) {
     console.error('Erro ao cancelar pagamento:', error);
@@ -295,9 +299,9 @@ export const refundPayment = async (paymentId: string, value?: number): Promise<
       return true;
     }
 
-    // Em produção, utiliza a API Asaas
+    // Em produção, utiliza a API Asaas v3
     const data = value ? { value } : {};
-    await asaasApi.post(`/payments/${paymentId}/refund`, data);
+    await asaasApi.post(`/v3/payments/${paymentId}/refund`, data);
     return true;
   } catch (error) {
     console.error('Erro ao reembolsar pagamento:', error);
@@ -314,8 +318,8 @@ export const resendPaymentEmail = async (paymentId: string): Promise<boolean> =>
       return true;
     }
 
-    // Em produção, utiliza a API Asaas
-    await asaasApi.post(`/payments/${paymentId}/notifications`);
+    // Em produção, utiliza a API Asaas v3
+    await asaasApi.post(`/v3/payments/${paymentId}/notifications`);
     return true;
   } catch (error) {
     console.error('Erro ao reenviar cobrança por e-mail:', error);
@@ -363,8 +367,8 @@ export const generateFinancialReport = async (
       };
     }
 
-    // Em produção, utiliza a API Asaas
-    let url = `/finance/payment/statistics?startDate=${startDate}&endDate=${endDate}`;
+    // Em produção, utiliza a API Asaas v3
+    let url = `/v3/finance/payment/statistics?startDate=${startDate}&endDate=${endDate}`;
     if (status) url += `&status=${status}`;
     
     const response = await asaasApi.get(url);

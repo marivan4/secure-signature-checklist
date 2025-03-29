@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { Invoice } from '@/lib/types';
 import api from './api';
@@ -106,16 +105,24 @@ export const createInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>):
   try {
     // Obter cliente ou criar novo no Asaas
     let customerId = '';
+    
     if (invoice.userId) {
+      console.log('Iniciando processo de criação de fatura para o usuário:', invoice.userId);
+      
       // Obter informações do cliente
       const clientResponse = await api.get(`/users/get_one.php?id=${invoice.userId}`);
+      
       if (clientResponse.data && clientResponse.data.cpfCnpj) {
         // Verificar se o CPF/CNPJ é válido
         const cpfCnpj = clientResponse.data.cpfCnpj.replace(/[^\d]/g, '');
+        
         if (!cpfCnpj || (cpfCnpj.length !== 11 && cpfCnpj.length !== 14)) {
+          console.error('CPF/CNPJ inválido ou não encontrado:', cpfCnpj);
           throw new Error('CPF/CNPJ inválido ou não encontrado');
         }
 
+        console.log('CPF/CNPJ do cliente válido:', cpfCnpj);
+        
         // Buscar cliente no Asaas por CPF/CNPJ
         const asaasCustomer = await getCustomerByCpfCnpj(cpfCnpj);
         
@@ -126,7 +133,7 @@ export const createInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>):
           // Criar novo cliente no Asaas
           console.log('Cliente não encontrado no Asaas, criando novo cliente...');
           const newCustomer = await createCustomer({
-            name: clientResponse.data.name || 'Cliente sem nome',
+            name: clientResponse.data.name || clientResponse.data.username || 'Cliente sem nome',
             email: clientResponse.data.email || invoice.email || 'cliente@exemplo.com',
             cpfCnpj: cpfCnpj,
             phone: clientResponse.data.phone || invoice.phone,
@@ -145,6 +152,8 @@ export const createInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>):
             console.error('Erro ao criar cliente no Asaas');
           }
         }
+      } else {
+        console.error('Dados do cliente não encontrados ou CPF/CNPJ não disponível');
       }
     }
 
@@ -152,9 +161,13 @@ export const createInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>):
     let asaasPaymentId = '';
     if (customerId) {
       console.log('Criando pagamento no Asaas para o cliente:', customerId);
+      
+      // Determinar o tipo de pagamento com base no billingType
+      const billingType = invoice.billingType || 'BOLETO';
+      
       const payment = await createPayment({
         customer: customerId,
-        billingType: 'BOLETO', // Pode ser configurável
+        billingType: billingType,
         value: invoice.amount,
         dueDate: invoice.dueDate,
         description: invoice.description,

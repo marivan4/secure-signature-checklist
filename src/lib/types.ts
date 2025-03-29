@@ -1,4 +1,3 @@
-
 export interface User {
   id: number;
   username: string;
@@ -48,6 +47,7 @@ export interface Invoice {
   phone?: string;
   asaasId?: string; // ID do pagamento no Asaas
   blocked?: boolean; // Se o veículo está bloqueado por falta de pagamento
+  billingType?: 'BOLETO' | 'PIX' | 'CREDIT_CARD'; // Tipo de cobrança no Asaas
 }
 
 export interface AuthContextType {
