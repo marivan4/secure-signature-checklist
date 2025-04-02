@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { createInvoice } from '@/services/invoiceApi';
-import { ArrowLeft, CreditCard, Calendar, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, Calendar, CheckCircle, Loader2 } from 'lucide-react';
 import { Invoice } from '@/lib/types';
 
 const formSchema = z.object({
@@ -29,6 +30,7 @@ const ClientCharge: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [clientData, setClientData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -59,6 +61,7 @@ const ClientCharge: React.FC = () => {
       } catch (error) {
         console.error('Erro ao buscar dados do cliente:', error);
         toast.error('Não foi possível carregar os dados do cliente');
+        setError('Erro ao carregar dados do cliente');
       }
     };
 
@@ -74,14 +77,32 @@ const ClientCharge: React.FC = () => {
     }
 
     setIsLoading(true);
+    setError(null);
+    
     try {
-      const invoice = {
+      // Validando o valor
+      if (values.amount <= 0) {
+        throw new Error('O valor da cobrança deve ser maior que zero');
+      }
+      
+      // Validando a data de vencimento
+      const dueDate = new Date(values.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dueDate < today) {
+        throw new Error('A data de vencimento não pode ser anterior à data atual');
+      }
+      
+      // Gerar número de fatura único
+      const invoiceNumber = `INV-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+      
+      const invoice: Omit<Invoice, 'id' | 'createdAt'> = {
         userId: parseInt(clientId),
         description: values.description,
         amount: values.amount,
         dueDate: values.dueDate,
-        status: 'pending' as const,
-        invoiceNumber: `INV-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+        status: 'pending', // Usando um valor literal do tipo esperado
+        invoiceNumber: invoiceNumber,
         email: clientData.email,
         phone: clientData.phone,
         billingType: values.billingType,
@@ -94,11 +115,13 @@ const ClientCharge: React.FC = () => {
         toast.success('Cobrança criada com sucesso');
         navigate(`/invoices/${result.id}`);
       } else {
-        toast.error('Erro ao criar cobrança');
+        throw new Error('Não foi possível criar a cobrança. Verifique os dados e tente novamente');
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao criar cobrança';
       console.error('Erro ao criar cobrança:', error);
-      toast.error('Erro ao criar cobrança');
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -168,6 +191,13 @@ const ClientCharge: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {error && (
+        <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded-md mt-6">
+          <p className="font-medium">Erro ao criar cobrança</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
 
       <Separator className="my-6" />
 
@@ -278,7 +308,10 @@ const ClientCharge: React.FC = () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <>Processando...</>
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processando...
+              </>
             ) : (
               <>
                 <CheckCircle className="mr-2 h-4 w-4" />

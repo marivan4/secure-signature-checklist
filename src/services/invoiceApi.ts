@@ -1,7 +1,8 @@
+
 import axios from 'axios';
 import { Invoice } from '@/lib/types';
 import api from './api';
-import { createCustomer, createPayment, getCustomerByCpfCnpj, checkCustomerExists } from './asaasApi';
+import { createCustomer, createPayment, getCustomerByCpfCnpj } from './asaasApi';
 import { getVehicles } from './vehicleApi';
 
 // Função para obter todas as faturas
@@ -103,18 +104,34 @@ export const getInvoiceById = async (id: number): Promise<Invoice | null> => {
 // Função para criar uma nova fatura
 export const createInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>): Promise<Invoice | null> => {
   try {
+    console.log('Iniciando criação de fatura com dados:', invoice);
+    
     // Obter cliente ou criar novo no Asaas
     let customerId = '';
     
     if (invoice.userId) {
-      console.log('Iniciando processo de criação de fatura para o usuário:', invoice.userId);
+      console.log('Buscando dados do cliente ID:', invoice.userId);
       
       // Obter informações do cliente
-      const clientResponse = await api.get(`/users/get_one.php?id=${invoice.userId}`);
+      let clientData;
       
-      if (clientResponse.data && clientResponse.data.cpfCnpj) {
+      if (!import.meta.env.PROD) {
+        // Mock de dados para desenvolvimento
+        clientData = {
+          id: invoice.userId,
+          name: `Cliente ${invoice.userId}`,
+          email: invoice.email || `cliente${invoice.userId}@exemplo.com`,
+          cpfCnpj: '123.456.789-00',
+          phone: invoice.phone || '(11) 98765-4321'
+        };
+      } else {
+        const clientResponse = await api.get(`/users/get_one.php?id=${invoice.userId}`);
+        clientData = clientResponse.data;
+      }
+      
+      if (clientData && clientData.cpfCnpj) {
         // Verificar se o CPF/CNPJ é válido
-        const cpfCnpj = clientResponse.data.cpfCnpj.replace(/[^\d]/g, '');
+        const cpfCnpj = clientData.cpfCnpj.replace(/[^\d]/g, '');
         
         if (!cpfCnpj || (cpfCnpj.length !== 11 && cpfCnpj.length !== 14)) {
           console.error('CPF/CNPJ inválido ou não encontrado:', cpfCnpj);
@@ -124,37 +141,47 @@ export const createInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>):
         console.log('CPF/CNPJ do cliente válido:', cpfCnpj);
         
         // Buscar cliente no Asaas por CPF/CNPJ
-        const asaasCustomer = await getCustomerByCpfCnpj(cpfCnpj);
-        
-        if (asaasCustomer) {
-          customerId = asaasCustomer.id;
-          console.log('Cliente já existente no Asaas:', asaasCustomer);
-        } else {
-          // Criar novo cliente no Asaas
-          console.log('Cliente não encontrado no Asaas, criando novo cliente...');
-          const newCustomer = await createCustomer({
-            name: clientResponse.data.name || clientResponse.data.username || 'Cliente sem nome',
-            email: clientResponse.data.email || invoice.email || 'cliente@exemplo.com',
-            cpfCnpj: cpfCnpj,
-            phone: clientResponse.data.phone || invoice.phone,
-            mobilePhone: clientResponse.data.mobilePhone || clientResponse.data.phone || invoice.phone,
-            address: clientResponse.data.address,
-            addressNumber: clientResponse.data.addressNumber,
-            complement: clientResponse.data.complement,
-            province: clientResponse.data.neighborhood || clientResponse.data.province,
-            postalCode: clientResponse.data.zipCode || clientResponse.data.postalCode
-          });
+        try {
+          const asaasCustomer = await getCustomerByCpfCnpj(cpfCnpj);
           
-          if (newCustomer) {
-            customerId = newCustomer.id;
-            console.log('Novo cliente criado no Asaas:', newCustomer);
+          if (asaasCustomer) {
+            customerId = asaasCustomer.id;
+            console.log('Cliente já existente no Asaas:', asaasCustomer);
           } else {
-            console.error('Erro ao criar cliente no Asaas');
+            // Criar novo cliente no Asaas
+            console.log('Cliente não encontrado no Asaas, criando novo cliente...');
+            const newCustomer = await createCustomer({
+              name: clientData.name || clientData.username || 'Cliente sem nome',
+              email: clientData.email || invoice.email || 'cliente@exemplo.com',
+              cpfCnpj: cpfCnpj,
+              phone: clientData.phone || invoice.phone,
+              mobilePhone: clientData.mobilePhone || clientData.phone || invoice.phone,
+              address: clientData.address,
+              addressNumber: clientData.addressNumber,
+              complement: clientData.complement,
+              province: clientData.neighborhood || clientData.province,
+              postalCode: clientData.zipCode || clientData.postalCode
+            });
+            
+            if (newCustomer && newCustomer.id) {
+              customerId = newCustomer.id;
+              console.log('Novo cliente criado no Asaas:', newCustomer);
+            } else {
+              console.error('Erro ao criar cliente no Asaas:', newCustomer);
+              throw new Error('Falha ao criar cliente no Asaas');
+            }
           }
+        } catch (error) {
+          console.error('Erro ao processar cliente no Asaas:', error);
+          throw new Error('Falha ao processar cliente no Asaas');
         }
       } else {
         console.error('Dados do cliente não encontrados ou CPF/CNPJ não disponível');
+        throw new Error('Dados do cliente incompletos');
       }
+    } else {
+      console.error('ID do usuário não fornecido');
+      throw new Error('ID do usuário é obrigatório');
     }
 
     // Criar pagamento no Asaas se tiver customer ID
@@ -165,20 +192,26 @@ export const createInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>):
       // Determinar o tipo de pagamento com base no billingType
       const billingType = invoice.billingType || 'BOLETO';
       
-      const payment = await createPayment({
-        customer: customerId,
-        billingType: billingType,
-        value: invoice.amount,
-        dueDate: invoice.dueDate,
-        description: invoice.description,
-        externalReference: invoice.invoiceNumber
-      });
-      
-      if (payment && payment.id) {
-        asaasPaymentId = payment.id;
-        console.log('Pagamento criado no Asaas:', payment);
-      } else {
-        console.error('Erro ao criar pagamento no Asaas');
+      try {
+        const payment = await createPayment({
+          customer: customerId,
+          billingType: billingType,
+          value: invoice.amount,
+          dueDate: invoice.dueDate,
+          description: invoice.description,
+          externalReference: invoice.invoiceNumber
+        });
+        
+        if (payment && payment.id) {
+          asaasPaymentId = payment.id;
+          console.log('Pagamento criado no Asaas com sucesso:', payment);
+        } else {
+          console.error('Resposta inesperada ao criar pagamento no Asaas:', payment);
+          throw new Error('Falha ao criar pagamento no Asaas');
+        }
+      } catch (error) {
+        console.error('Erro ao criar pagamento no Asaas:', error);
+        throw new Error('Falha ao criar pagamento no Asaas');
       }
     } else {
       console.warn('Cliente não encontrado ou não criado no Asaas, fatura será criada apenas no sistema local');
@@ -186,6 +219,7 @@ export const createInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>):
 
     // Em desenvolvimento, usamos dados mockados
     if (!import.meta.env.PROD) {
+      console.log('Ambiente de desenvolvimento, criando fatura mockada');
       // Mock para desenvolvimento
       const newInvoice: Invoice = {
         ...invoice,
@@ -194,16 +228,25 @@ export const createInvoice = async (invoice: Omit<Invoice, 'id' | 'createdAt'>):
         asaasId: asaasPaymentId || `pay_mock${Math.random().toString(36).substring(2, 15)}`
       };
 
+      console.log('Fatura mockada criada com sucesso:', newInvoice);
       return newInvoice;
     }
 
     // Em produção, usa a API PHP
+    console.log('Ambiente de produção, salvando fatura no banco de dados');
     const invoiceData = {
       ...invoice,
       asaasId: asaasPaymentId
     };
-    const response = await api.post('/invoices/create.php', invoiceData);
-    return response.data;
+    
+    try {
+      const response = await api.post('/invoices/create.php', invoiceData);
+      console.log('Fatura salva no banco de dados com sucesso:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao salvar fatura no banco de dados:', error);
+      throw new Error('Falha ao salvar fatura no banco de dados');
+    }
   } catch (error) {
     console.error('Erro ao criar fatura:', error);
     return null;

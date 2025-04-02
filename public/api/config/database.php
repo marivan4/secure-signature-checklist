@@ -16,11 +16,11 @@ class Database {
             $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
             $this->conn->exec("set names utf8");
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $this->conn;
         } catch(PDOException $exception) {
             echo "Erro de conexão: " . $exception->getMessage();
+            return null;
         }
-
-        return $this->conn;
     }
     
     // Criar tabela de veículos se não existir
@@ -40,6 +40,72 @@ class Database {
             return true;
         } catch(PDOException $exception) {
             echo "Erro ao criar tabela: " . $exception->getMessage();
+            return false;
+        }
+    }
+    
+    // Função para verificar se uma tabela existe
+    public function tableExists($tableName) {
+        try {
+            $result = $this->conn->query("SHOW TABLES LIKE '{$tableName}'");
+            return $result->rowCount() > 0;
+        } catch(PDOException $exception) {
+            echo "Erro ao verificar tabela: " . $exception->getMessage();
+            return false;
+        }
+    }
+    
+    // Função para verificar e criar tabela de faturas se não existir
+    public function createInvoicesTableIfNotExists() {
+        $query = "CREATE TABLE IF NOT EXISTS invoices (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            userId INT NOT NULL,
+            checklistId INT,
+            invoiceNumber VARCHAR(50) NOT NULL,
+            description TEXT NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            status ENUM('pending', 'paid', 'cancelled') NOT NULL DEFAULT 'pending',
+            dueDate DATE NOT NULL,
+            paidDate DATE,
+            createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            email VARCHAR(100),
+            phone VARCHAR(20),
+            asaasId VARCHAR(100),
+            billingType ENUM('BOLETO', 'PIX', 'CREDIT_CARD') DEFAULT 'BOLETO',
+            blocked TINYINT(1) DEFAULT 0
+        )";
+        
+        try {
+            $this->conn->exec($query);
+            return true;
+        } catch(PDOException $exception) {
+            echo "Erro ao criar tabela de faturas: " . $exception->getMessage();
+            return false;
+        }
+    }
+    
+    // Função para atualizar estrutura da tabela se necessário
+    public function updateInvoicesTableStructure() {
+        try {
+            // Verifica se a coluna billingType já existe
+            $result = $this->conn->query("SHOW COLUMNS FROM invoices LIKE 'billingType'");
+            if ($result->rowCount() == 0) {
+                // Adiciona a coluna billingType se não existir
+                $this->conn->exec("ALTER TABLE invoices ADD COLUMN billingType ENUM('BOLETO', 'PIX', 'CREDIT_CARD') DEFAULT 'BOLETO' AFTER asaasId");
+                echo "Coluna billingType adicionada com sucesso.\n";
+            }
+            
+            // Verifica se a coluna blocked já existe
+            $result = $this->conn->query("SHOW COLUMNS FROM invoices LIKE 'blocked'");
+            if ($result->rowCount() == 0) {
+                // Adiciona a coluna blocked se não existir
+                $this->conn->exec("ALTER TABLE invoices ADD COLUMN blocked TINYINT(1) DEFAULT 0 AFTER billingType");
+                echo "Coluna blocked adicionada com sucesso.\n";
+            }
+            
+            return true;
+        } catch(PDOException $exception) {
+            echo "Erro ao atualizar estrutura da tabela: " . $exception->getMessage();
             return false;
         }
     }

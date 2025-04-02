@@ -32,7 +32,7 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { createInvoice, getInvoiceById, updateInvoice } from '@/services/invoiceApi';
 import { getChecklists } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,8 +46,9 @@ const invoiceSchema = z.object({
   dueDate: z.string().min(1, 'Data de vencimento é obrigatória'),
   paidDate: z.string().optional(),
   checklistId: z.string().optional(),
-  email: z.string().email('Email inválido').optional(),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
   phone: z.string().optional(),
+  billingType: z.enum(['BOLETO', 'PIX', 'CREDIT_CARD']).optional(),
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
@@ -57,6 +58,7 @@ const InvoiceForm: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isEditing = !!id;
+  const [error, setError] = React.useState<string | null>(null);
 
   // Busca a fatura se estiver editando
   const { data: invoice, isLoading: isLoadingInvoice } = useQuery({
@@ -88,6 +90,7 @@ const InvoiceForm: React.FC = () => {
       checklistId: '',
       email: '',
       phone: '',
+      billingType: 'BOLETO',
     },
   });
 
@@ -104,6 +107,7 @@ const InvoiceForm: React.FC = () => {
         checklistId: invoice.checklistId ? String(invoice.checklistId) : '',
         email: invoice.email || '',
         phone: invoice.phone || '',
+        billingType: invoice.billingType || 'BOLETO',
       });
     }
   }, [invoice, isEditing, form]);
@@ -111,6 +115,9 @@ const InvoiceForm: React.FC = () => {
   // Mutação para criar/atualizar fatura
   const mutation = useMutation({
     mutationFn: async (values: InvoiceFormValues) => {
+      setError(null);
+      console.log('Enviando dados de fatura:', values);
+      
       // Create a properly typed object that matches the required Invoice fields
       const formattedValues = {
         invoiceNumber: values.invoiceNumber,
@@ -120,15 +127,26 @@ const InvoiceForm: React.FC = () => {
         dueDate: values.dueDate,
         userId: user?.id || 0,
         paidDate: values.paidDate || undefined,
-        checklistId: values.checklistId ? Number(values.checklistId) : undefined,
+        checklistId: values.checklistId && values.checklistId !== 'none' ? Number(values.checklistId) : undefined,
         email: values.email || undefined,
         phone: values.phone || undefined,
+        billingType: values.billingType || 'BOLETO',
       };
 
-      if (isEditing) {
-        return updateInvoice(Number(id), formattedValues);
-      } else {
-        return createInvoice(formattedValues);
+      try {
+        if (isEditing) {
+          return await updateInvoice(Number(id), formattedValues);
+        } else {
+          return await createInvoice(formattedValues);
+        }
+      } catch (error) {
+        console.error('Erro na mutação:', error);
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError('Erro desconhecido ao processar fatura');
+        }
+        throw error;
       }
     },
     onSuccess: () => {
@@ -137,10 +155,13 @@ const InvoiceForm: React.FC = () => {
       );
       navigate('/invoices');
     },
-    onError: () => {
-      toast.error(
-        isEditing ? 'Erro ao atualizar fatura' : 'Erro ao criar fatura'
-      );
+    onError: (error) => {
+      const errorMessage = error instanceof Error 
+        ? `Erro: ${error.message}` 
+        : 'Erro ao processar fatura. Verifique os dados e tente novamente.';
+      
+      toast.error(errorMessage);
+      setError(errorMessage);
     },
   });
 
@@ -167,6 +188,18 @@ const InvoiceForm: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {error && (
+          <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded-md mb-6">
+            <div className="flex items-start">
+              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">Erro ao processar fatura</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -201,7 +234,6 @@ const InvoiceForm: React.FC = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {/* Changed the value from empty string to "none" to fix the error */}
                         <SelectItem value="none">Nenhum</SelectItem>
                         {checklists.map((checklist) => (
                           <SelectItem key={checklist.id} value={String(checklist.id)}>
@@ -225,7 +257,7 @@ const InvoiceForm: React.FC = () => {
                       <Input 
                         type="number" 
                         step="0.01" 
-                        min="0"
+                        min="0.01"
                         placeholder="0.00" 
                         {...field} 
                       />
@@ -312,6 +344,32 @@ const InvoiceForm: React.FC = () => {
                     <FormControl>
                       <Input type="tel" placeholder="(99) 99999-9999" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="billingType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Forma de Pagamento</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value || 'BOLETO'}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma forma de pagamento" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="BOLETO">Boleto Bancário</SelectItem>
+                        <SelectItem value="PIX">PIX</SelectItem>
+                        <SelectItem value="CREDIT_CARD">Cartão de Crédito</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
