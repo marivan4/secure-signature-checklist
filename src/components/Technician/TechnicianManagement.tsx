@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, Tool, CheckSquare, FileText, UserCheck } from 'lucide-react';
+import { UserPlus, Wrench, CheckSquare, FileText, UserCheck } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -102,7 +101,7 @@ const TechnicianManagement: React.FC = () => {
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="text-xl flex items-center">
-          <Tool className="mr-2 h-5 w-5 text-primary" />
+          <Wrench className="mr-2 h-5 w-5 text-primary" />
           Gestão de Técnicos
         </CardTitle>
         <CardDescription>

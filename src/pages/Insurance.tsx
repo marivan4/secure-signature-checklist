@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, MessageSquare, Users, Tool, Calendar, Smartphone, Brain } from 'lucide-react';
+import { Shield, MessageSquare, Users, Wrench, Calendar, Smartphone, Brain } from 'lucide-react';
 import OverdueNotification from '@/components/Notifications/OverdueNotification';
 import TechnicianManagement from '@/components/Technician/TechnicianManagement';
 import SelfScheduling from '@/components/Scheduling/SelfScheduling';
@@ -28,7 +28,7 @@ const InsurancePage: React.FC = () => {
             <span>Notificações</span>
           </TabsTrigger>
           <TabsTrigger value="technicians" className="flex items-center">
-            <Tool className="mr-2 h-4 w-4" />
+            <Wrench className="mr-2 h-4 w-4" />
             <span>Técnicos</span>
           </TabsTrigger>
           <TabsTrigger value="scheduling" className="flex items-center">
