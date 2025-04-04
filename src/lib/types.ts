@@ -1,4 +1,3 @@
-
 export interface User {
   id: number;
   username: string;
@@ -11,6 +10,7 @@ export interface User {
   zipCode?: string;
   role: 'admin' | 'client' | 'manager' | 'reseller' | 'end_client';
   createdAt: string;
+  parentId?: number; // Used to track reseller's parent admin
 }
 
 export interface Checklist {
@@ -232,4 +232,42 @@ export interface Tracker {
   simCardNumber?: string;
   notes?: string;
   createdAt?: string;
+}
+
+export interface Reseller {
+  id: number;
+  userId: number;
+  name: string;
+  logo?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  email?: string;
+  phone?: string;
+  contactName?: string;
+  contactPhone?: string;
+  description?: string;
+  status: 'active' | 'pending' | 'inactive';
+  clientsCount: number;
+  monthlyRevenue: number;
+  since: string;
+  createdAt: string;
+  createdBy: number; // Admin ID who created the reseller
+  asaasConfigured: boolean;
+}
+
+export interface ResellerClient {
+  id: number;
+  resellerId: number;
+  name: string;
+  email: string;
+  phone?: string;
+  cpfCnpj: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  status: 'active' | 'inactive' | 'pending';
+  createdAt: string;
 }

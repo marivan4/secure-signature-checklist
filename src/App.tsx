@@ -1,431 +1,91 @@
+import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import MainLayout from "@/components/Layout/MainLayout";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Signature from "./pages/Signature";
-import NotFound from "./pages/NotFound";
-import ChecklistForm from "@/components/Checklist/ChecklistForm";
-import ChecklistDetail from "@/components/Checklist/ChecklistDetail";
-import InvoicePage from "./pages/Invoices";
-import WhatsAppSettings from "./components/WhatsApp/WhatsAppSettings";
-import AsaasSettings from "./components/Settings/AsaasSettings";
-import { useState, StrictMode } from "react";
-import InvoiceForm from "./components/Invoice/InvoiceForm";
-import InvoiceDetail from "./components/Invoice/InvoiceDetail";
-import InvoiceSend from "./components/Invoice/InvoiceSend";
-import InvoiceExport from "./components/Invoice/InvoiceExport";
-import Clients from "./pages/Clients";
-import Trackers from "./pages/Trackers";
-import Marketplace from "./pages/Marketplace";
-import ProductDetail from "./pages/marketplace/ProductDetail";
-import Checkout from "./pages/marketplace/Checkout";
-import Insurance from "./pages/Insurance";
-import Plans from "./pages/Plans";
-import NewClient from "./pages/clients/NewClient";
-import TrackerForm from "./pages/trackers/TrackerForm";
-import TrackerDetail from "./pages/trackers/TrackerDetail";
-import ClientCharge from "./pages/charges/ClientCharge";
-import PublicScheduling from "./pages/scheduling/PublicScheduling";
-import SchedulingSettings from "./pages/scheduling/SchedulingSettings";
-import Resellers from "./pages/Resellers";
-import ResellerDetail from "./pages/resellers/ResellerDetail";
-import ResellerForm from "./pages/resellers/ResellerForm";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster as SonnerToaster } from 'sonner';
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
+import Dashboard from '@/pages/Dashboard';
+import Clients from '@/pages/Clients';
+import NewClient from '@/pages/clients/NewClient';
+import Invoices from '@/pages/Invoices';
+import Login from '@/pages/Login';
+import MainLayout from '@/components/Layout/MainLayout';
+import Index from '@/pages/Index';
+import NotFound from '@/pages/NotFound';
+import Trackers from '@/pages/Trackers';
+import TrackerForm from '@/pages/trackers/TrackerForm';
+import TrackerDetail from '@/pages/trackers/TrackerDetail';
+import Plans from '@/pages/Plans';
+import Insurance from '@/pages/Insurance';
+import Signature from '@/pages/Signature';
+import PublicScheduling from '@/pages/scheduling/PublicScheduling';
+import Marketplace from '@/pages/Marketplace';
+import ProductDetail from '@/pages/marketplace/ProductDetail';
+import Checkout from '@/pages/marketplace/Checkout';
+import WhatsAppSettings from '@/components/WhatsApp/WhatsAppSettings';
+import Resellers from '@/pages/Resellers';
+import ResellerForm from '@/pages/resellers/ResellerForm';
+import ResellerDetail from '@/pages/resellers/ResellerDetail';
 
-const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-  
-  if (!user || user.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return <>{children}</>;
-};
+// Reseller Dashboard Components
+import ResellerDashboard from '@/pages/reseller-dashboard/ResellerDashboard';
+import ResellerHome from '@/pages/reseller-dashboard/ResellerHome';
+import ResellerClients from '@/pages/reseller-dashboard/ResellerClients';
+import ResellerFinance from '@/pages/reseller-dashboard/ResellerFinance';
+import ResellerIntegrations from '@/pages/reseller-dashboard/ResellerIntegrations';
 
-const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-  
-  if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return <>{children}</>;
-};
+import './App.css';
 
-const ResellerRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-  
-  if (!user || (user.role !== 'admin' && user.role !== 'reseller')) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return <>{children}</>;
-};
+// Create a client
+const queryClient = new QueryClient();
 
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Index />} />
-    <Route path="/login" element={<Login />} />
-    
-    <Route 
-      path="/schedule" 
-      element={<PublicScheduling />} 
-    />
-    
-    <Route 
-      path="/dashboard" 
-      element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/clients" 
-      element={
-        <ProtectedRoute>
-          <Clients />
-        </ProtectedRoute>
-      } 
-    />
+function App() {
+  useEffect(() => {
+    document.title = 'Checklist Manager';
+  }, []);
 
-    <Route 
-      path="/clients/new" 
-      element={
-        <ProtectedRoute>
-          <ManagerRoute>
-            <NewClient />
-          </ManagerRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/clients/:clientId/charge" 
-      element={
-        <ProtectedRoute>
-          <ManagerRoute>
-            <ClientCharge />
-          </ManagerRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/plans" 
-      element={
-        <ProtectedRoute>
-          <Plans />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/trackers" 
-      element={
-        <ProtectedRoute>
-          <Trackers />
-        </ProtectedRoute>
-      } 
-    />
-
-    <Route 
-      path="/trackers/new" 
-      element={
-        <ProtectedRoute>
-          <ManagerRoute>
-            <TrackerForm />
-          </ManagerRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/trackers/edit/:id" 
-      element={
-        <ProtectedRoute>
-          <ManagerRoute>
-            <TrackerForm />
-          </ManagerRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/trackers/:id" 
-      element={
-        <ProtectedRoute>
-          <TrackerDetail />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/marketplace" 
-      element={
-        <ProtectedRoute>
-          <Marketplace />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/marketplace/products/:id" 
-      element={
-        <ProtectedRoute>
-          <ProductDetail />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/marketplace/checkout" 
-      element={
-        <ProtectedRoute>
-          <Checkout />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/insurance" 
-      element={
-        <ProtectedRoute>
-          <Insurance />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/resellers" 
-      element={
-        <ProtectedRoute>
-          <Resellers />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/resellers/:id" 
-      element={
-        <ProtectedRoute>
-          <ResellerDetail />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/resellers/new" 
-      element={
-        <ProtectedRoute>
-          <AdminRoute>
-            <ResellerForm />
-          </AdminRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/resellers/:id/edit" 
-      element={
-        <ProtectedRoute>
-          <AdminRoute>
-            <ResellerForm />
-          </AdminRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/checklist/new" 
-      element={
-        <ProtectedRoute>
-          <AdminRoute>
-            <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
-              <ChecklistForm />
-            </div>
-          </AdminRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/checklist/:id" 
-      element={
-        <ProtectedRoute>
-          <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
-            <ChecklistDetail />
-          </div>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/invoices" 
-      element={
-        <ProtectedRoute>
-          <InvoicePage />
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/invoices/new" 
-      element={
-        <ProtectedRoute>
-          <ManagerRoute>
-            <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
-              <InvoiceForm />
-            </div>
-          </ManagerRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/invoices/edit/:id" 
-      element={
-        <ProtectedRoute>
-          <ManagerRoute>
-            <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
-              <InvoiceForm />
-            </div>
-          </ManagerRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/invoices/:id" 
-      element={
-        <ProtectedRoute>
-          <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
-            <InvoiceDetail />
-          </div>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/invoices/:id/send" 
-      element={
-        <ProtectedRoute>
-          <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
-            <InvoiceSend />
-          </div>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/invoices/:id/export" 
-      element={
-        <ProtectedRoute>
-          <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto">
-            <InvoiceExport />
-          </div>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/whatsapp" 
-      element={
-        <ProtectedRoute>
-          <ManagerRoute>
-            <WhatsAppSettings />
-          </ManagerRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/settings/asaas" 
-      element={
-        <ProtectedRoute>
-          <ResellerRoute>
-            <AsaasSettings />
-          </ResellerRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route 
-      path="/scheduling/settings" 
-      element={
-        <ProtectedRoute>
-          <ManagerRoute>
-            <SchedulingSettings />
-          </ManagerRoute>
-        </ProtectedRoute>
-      } 
-    />
-    
-    <Route path="/signature/:token" element={<Signature />} />
-    
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
-
-const App = () => {
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: 1,
-        refetchOnWindowFocus: false,
-      },
-    },
-  }));
-  
   return (
-    <StrictMode>
+    <div className="App">
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <BrowserRouter>
-              <MainLayout>
-                <AppRoutes />
-              </MainLayout>
-              <Toaster />
-              <Sonner />
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
+        <SonnerToaster richColors position="bottom-center" />
+        <Toaster />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route element={<MainLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/clients/new" element={<NewClient />} />
+            <Route path="/invoices" element={<Invoices />} />
+            <Route path="/trackers" element={<Trackers />} />
+            <Route path="/trackers/new" element={<TrackerForm />} />
+            <Route path="/trackers/:id" element={<TrackerDetail />} />
+            <Route path="/plans" element={<Plans />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/marketplace/product/:id" element={<ProductDetail />} />
+            <Route path="/marketplace/checkout" element={<Checkout />} />
+            <Route path="/insurance" element={<Insurance />} />
+            <Route path="/whatsapp" element={<WhatsAppSettings />} />
+            <Route path="/resellers" element={<Resellers />} />
+            <Route path="/resellers/new" element={<ResellerForm />} />
+            <Route path="/resellers/:id" element={<ResellerDetail />} />
+            <Route path="/resellers/:id/edit" element={<ResellerForm />} />
+            
+            {/* Reseller Dashboard Routes */}
+            <Route path="/reseller-dashboard" element={<ResellerDashboard />}>
+              <Route index element={<ResellerHome />} />
+              <Route path="clients" element={<ResellerClients />} />
+              <Route path="finance" element={<ResellerFinance />} />
+              <Route path="integrations" element={<ResellerIntegrations />} />
+            </Route>
+          </Route>
+          <Route path="/scheduling" element={<PublicScheduling />} />
+          <Route path="/signature/:checklistId" element={<Signature />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </QueryClientProvider>
-    </StrictMode>
+    </div>
   );
-};
+}
 
 export default App;

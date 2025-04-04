@@ -21,7 +21,7 @@ if (!empty($data->username) && !empty($data->password)) {
     $db = $database->getConnection();
     
     // Verificar se o usuário existe
-    $query = "SELECT id, username, password, role, parent_id, created_at FROM users WHERE username = :username LIMIT 0,1";
+    $query = "SELECT id, username, name, email, phone, address, city, state, zip_code as zipCode, password, role, parent_id as parentId, created_at as createdAt FROM usuarios WHERE username = :username LIMIT 0,1";
     $stmt = $db->prepare($query);
     $stmt->bindParam(":username", $data->username);
     $stmt->execute();
@@ -32,22 +32,15 @@ if (!empty($data->username) && !empty($data->password)) {
         $username = $row['username'];
         $password = $row['password'];
         $role = $row['role'];
-        $parent_id = $row['parent_id'];
-        $created_at = $row['created_at'];
+        $parentId = $row['parentId'];
+        $createdAt = $row['createdAt'];
         
         // Verificar senha
-        // Para simplificar, estamos verificando diretamente neste exemplo
-        // Em produção, você deve usar password_verify se estiver usando hash
-        if ($data->password == $password) {
+        // Em produção usar password_verify
+        if (password_verify($data->password, $password) || $data->password === $password) {
             
-            // Criar array de resposta
-            $response = array(
-                "id" => $id,
-                "username" => $username,
-                "role" => $role,
-                "parentId" => $parent_id,
-                "createdAt" => $created_at
-            );
+            // Criar array de resposta (use the row directly which already has camelCase keys)
+            $response = $row;
             
             // Responder com sucesso
             http_response_code(200);

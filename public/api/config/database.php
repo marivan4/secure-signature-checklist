@@ -1,4 +1,3 @@
-
 <?php
 class Database {
     // Credenciais do banco de dados
@@ -106,6 +105,69 @@ class Database {
             return true;
         } catch(PDOException $exception) {
             echo "Erro ao atualizar estrutura da tabela: " . $exception->getMessage();
+            return false;
+        }
+    }
+    
+    // Função para verificar e criar tabela de revendas se não existir
+    public function createResellersTableIfNotExists() {
+        $query = "CREATE TABLE IF NOT EXISTS revendas (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            logo VARCHAR(255),
+            address VARCHAR(255),
+            city VARCHAR(255),
+            state VARCHAR(2),
+            zip_code VARCHAR(10),
+            email VARCHAR(255),
+            phone VARCHAR(20),
+            contact_name VARCHAR(255),
+            contact_phone VARCHAR(20),
+            description TEXT,
+            status ENUM('active', 'pending', 'inactive') NOT NULL DEFAULT 'pending',
+            clients_count INT DEFAULT 0,
+            monthly_revenue DECIMAL(10,2) DEFAULT 0,
+            since DATE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by INT NOT NULL,
+            asaas_configured BOOLEAN DEFAULT FALSE,
+            FOREIGN KEY (user_id) REFERENCES usuarios(id),
+            FOREIGN KEY (created_by) REFERENCES usuarios(id)
+        )";
+        
+        try {
+            $this->conn->exec($query);
+            return true;
+        } catch(PDOException $exception) {
+            echo "Erro ao criar tabela de revendas: " . $exception->getMessage();
+            return false;
+        }
+    }
+    
+    // Função para verificar e criar tabela de clientes de revendas se não existir
+    public function createResellerClientsTableIfNotExists() {
+        $query = "CREATE TABLE IF NOT EXISTS reseller_clients (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            reseller_id INT NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            phone VARCHAR(20),
+            cpf_cnpj VARCHAR(20) NOT NULL,
+            address VARCHAR(255),
+            city VARCHAR(255),
+            state VARCHAR(2),
+            zip_code VARCHAR(10),
+            status ENUM('active', 'inactive', 'pending') NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (reseller_id) REFERENCES revendas(id)
+        )";
+        
+        try {
+            $this->conn->exec($query);
+            return true;
+        } catch(PDOException $exception) {
+            echo "Erro ao criar tabela de clientes de revendas: " . $exception->getMessage();
             return false;
         }
     }

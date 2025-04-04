@@ -1,4 +1,3 @@
-
 <?php
 // Configuração de conexão com o banco de dados
 $host = "localhost";
@@ -11,7 +10,7 @@ $conn = new mysqli($host, $username, $password, $dbname);
 
 // Verifica conexão
 if ($conn->connect_error) {
-    die("Falha na conexão: " . $conn->connect_error);
+    die("Falha na conexão: " . $conn->error);
 }
 
 echo "<h1>Configurando banco de dados para o Sistema de Rastreamento Veicular</h1>";
@@ -21,6 +20,13 @@ $sql_users = "CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    address VARCHAR(255),
+    city VARCHAR(255),
+    state VARCHAR(2),
+    zip_code VARCHAR(10),
     role ENUM('admin', 'manager', 'client', 'reseller', 'end_client') NOT NULL DEFAULT 'client',
     parent_id INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -161,6 +167,61 @@ if ($conn->query($sql_system_config) === TRUE) {
     echo "<p>Tabela 'system_config' criada ou já existente.</p>";
 } else {
     echo "<p>Erro ao criar tabela 'system_config': " . $conn->error . "</p>";
+}
+
+// Cria tabela de revendas se não existir
+$sql_resellers = "CREATE TABLE IF NOT EXISTS revendas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    logo VARCHAR(255),
+    address VARCHAR(255),
+    city VARCHAR(255),
+    state VARCHAR(2),
+    zip_code VARCHAR(10),
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    contact_name VARCHAR(255),
+    contact_phone VARCHAR(20),
+    description TEXT,
+    status ENUM('active', 'pending', 'inactive') NOT NULL DEFAULT 'pending',
+    clients_count INT DEFAULT 0,
+    monthly_revenue DECIMAL(10,2) DEFAULT 0,
+    since DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INT NOT NULL,
+    asaas_configured BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES usuarios(id),
+    FOREIGN KEY (created_by) REFERENCES usuarios(id)
+)";
+
+if ($conn->query($sql_resellers) === TRUE) {
+    echo "<p>Tabela 'revendas' criada ou já existente.</p>";
+} else {
+    echo "<p>Erro ao criar tabela 'revendas': " . $conn->error . "</p>";
+}
+
+// Cria tabela de clientes de revendas se não existir
+$sql_reseller_clients = "CREATE TABLE IF NOT EXISTS reseller_clients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reseller_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    cpf_cnpj VARCHAR(20) NOT NULL,
+    address VARCHAR(255),
+    city VARCHAR(255),
+    state VARCHAR(2),
+    zip_code VARCHAR(10),
+    status ENUM('active', 'inactive', 'pending') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reseller_id) REFERENCES revendas(id)
+)";
+
+if ($conn->query($sql_reseller_clients) === TRUE) {
+    echo "<p>Tabela 'reseller_clients' criada ou já existente.</p>";
+} else {
+    echo "<p>Erro ao criar tabela 'reseller_clients': " . $conn->error . "</p>";
 }
 
 // Adiciona chave global da API WhatsApp nas configurações do sistema

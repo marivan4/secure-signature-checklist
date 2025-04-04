@@ -59,7 +59,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           user = {
             id: 3,
             username: 'reseller',
+            name: 'Rastreadores São Paulo',
+            email: 'contato@rastreadores-sp.com.br',
+            phone: '(11) 3456-7890',
+            address: 'Av. Paulista, 1578',
+            city: 'São Paulo',
+            state: 'SP',
+            zipCode: '01310-200',
             role: 'reseller',
+            parentId: 1, // Created by admin
             createdAt: new Date().toISOString()
           };
         } else if (username === 'endclient' && password === 'endclient') {
@@ -67,6 +75,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: 4,
             username: 'endclient',
             role: 'end_client',
+            parentId: 3, // Belongs to reseller with ID 3
+            createdAt: new Date().toISOString()
+          };
+        } else if (username === 'manager' && password === 'manager') {
+          user = {
+            id: 5,
+            username: 'manager',
+            role: 'manager',
             createdAt: new Date().toISOString()
           };
         }
