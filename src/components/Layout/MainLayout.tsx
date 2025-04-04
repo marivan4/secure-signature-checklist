@@ -50,19 +50,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
   
   const isSignaturePage = location.pathname.includes('/signature/');
   const currentPath = location.pathname;
-
-  // Make sure component is mounted before rendering to avoid hydration issues
-  useEffect(() => {
-    setMounted(true);
-    
-    return () => {
-      setMounted(false);
-    };
-  }, []);
 
   // Don't show sidebar on login or index page
   const shouldShowSidebar = !location.pathname.includes('/login') && location.pathname !== '/';
@@ -77,11 +67,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   // Don't show sidebar/header/footer on signature page for a cleaner experience
   if (isSignaturePage) {
     return <div className="min-h-screen animate-fade-in">{children}</div>;
-  }
-
-  // Prevent rendering until after component is mounted
-  if (!mounted) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
   return (
@@ -149,7 +134,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   icon={Settings} 
                   label="Administração" 
                   href="/whatsapp" 
-                  active={currentPath.startsWith('/whatsapp')} 
+                  active={currentPath.startsWith('/whatsapp') || currentPath.startsWith('/settings')} 
                 />
               )}
             </nav>

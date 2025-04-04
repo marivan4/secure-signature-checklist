@@ -42,10 +42,17 @@ const AsaasSettings: React.FC = () => {
   });
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    // Safety check to prevent state updates on unmounted component
+    let isMounted = true;
+
+    if (user?.role === 'admin' && isMounted) {
       setIsAdmin(true);
       fetchAllConfigs();
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   const fetchAllConfigs = async () => {
@@ -60,11 +67,18 @@ const AsaasSettings: React.FC = () => {
   };
 
   useEffect(() => {
+    // Safety check to prevent state updates on unmounted component
+    let isMounted = true;
+
     const loadConfig = async () => {
       if (user?.id && (user.role === 'admin' || user.role === 'manager')) {
         setIsLoading(true);
         try {
           const config = await getAsaasConfig(user.id);
+          
+          // Check if component is still mounted before updating state
+          if (!isMounted) return;
+          
           if (config) {
             form.reset({
               apiKey: config.apiKey,
@@ -76,15 +90,22 @@ const AsaasSettings: React.FC = () => {
             initAsaasApi(config);
           }
         } catch (error) {
+          if (!isMounted) return;
           console.error('Erro ao carregar configuração do Asaas:', error);
           toast.error('Não foi possível carregar a configuração do Asaas');
         } finally {
-          setIsLoading(false);
+          if (isMounted) {
+            setIsLoading(false);
+          }
         }
       }
     };
 
     loadConfig();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -291,9 +312,11 @@ const AsaasSettings: React.FC = () => {
                         <TableCell>Admin #{config.userId}</TableCell>
                         <TableCell>{config.sandbox ? 'Sandbox' : 'Produção'}</TableCell>
                         <TableCell>
-                          {config.apiKey.substring(0, 8)}...{config.apiKey.substring(config.apiKey.length - 8)}
+                          {config.apiKey && config.apiKey.length > 16 ? 
+                            `${config.apiKey.substring(0, 8)}...${config.apiKey.substring(config.apiKey.length - 8)}` : 
+                            '******'}
                         </TableCell>
-                        <TableCell>{new Date(config.createdAt || '').toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell>{config.createdAt ? new Date(config.createdAt).toLocaleDateString('pt-BR') : '-'}</TableCell>
                       </TableRow>
                     ))
                   ) : (
