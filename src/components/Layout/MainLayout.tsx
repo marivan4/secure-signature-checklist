@@ -58,6 +58,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   // Make sure component is mounted before rendering to avoid hydration issues
   useEffect(() => {
     setMounted(true);
+    
     return () => {
       setMounted(false);
     };
@@ -78,6 +79,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     return <div className="min-h-screen animate-fade-in">{children}</div>;
   }
 
+  // Prevent rendering until after component is mounted
   if (!mounted) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }

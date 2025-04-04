@@ -30,21 +30,8 @@ const TrackerDetail: React.FC = () => {
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
   const [isBlockLoading, setIsBlockLoading] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    
-    return () => {
-      setIsMounted(false);
-    };
-  }, []);
-
-  useEffect(() => {
-    // Skip if not mounted
-    if (!isMounted) return;
-    
-    // Cleanup function to handle component unmounting during data fetch
     let isActive = true;
     
     const loadTracker = async () => {
@@ -53,7 +40,6 @@ const TrackerDetail: React.FC = () => {
         // Simulação de requisição
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Skip update if component unmounted
         if (!isActive) return;
         
         const trackerData: Tracker = {
@@ -72,13 +58,11 @@ const TrackerDetail: React.FC = () => {
         
         setTracker(trackerData);
       } catch (error) {
-        // Skip update if component unmounted
         if (!isActive) return;
         
         console.error('Erro ao carregar dados do rastreador:', error);
         toast.error('Erro ao carregar dados do rastreador');
       } finally {
-        // Skip update if component unmounted
         if (!isActive) return;
         
         setIsLoading(false);
@@ -90,43 +74,33 @@ const TrackerDetail: React.FC = () => {
     return () => {
       isActive = false;
     };
-  }, [id, isMounted]);
+  }, [id]);
 
   const handleDelete = async () => {
-    if (!isMounted) return;
-    
     setIsDeleteLoading(true);
     try {
       // Aqui você implementaria a lógica para excluir o rastreador
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (!isMounted) return;
-      
       toast.success('Rastreador excluído com sucesso!');
       navigate('/trackers');
     } catch (error) {
-      if (!isMounted) return;
-      
       console.error('Erro ao excluir rastreador:', error);
       toast.error('Erro ao excluir rastreador');
     } finally {
-      if (!isMounted) return;
-      
       setIsDeleteLoading(false);
       setIsDeleteDialogOpen(false);
     }
   };
 
   const handleBlockToggle = async () => {
-    if (!tracker || !isMounted) return;
+    if (!tracker) return;
     
     setIsBlockLoading(true);
     try {
       // Aqui você implementaria a lógica para bloquear/desbloquear o rastreador
       const newStatus = tracker.status === 'blocked' ? 'active' : 'blocked';
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (!isMounted) return;
       
       setTracker({ ...tracker, status: newStatus as any });
       
@@ -136,13 +110,9 @@ const TrackerDetail: React.FC = () => {
           : 'Rastreador desbloqueado com sucesso!'
       );
     } catch (error) {
-      if (!isMounted) return;
-      
       console.error('Erro ao alterar status do rastreador:', error);
       toast.error('Erro ao alterar status do rastreador');
     } finally {
-      if (!isMounted) return;
-      
       setIsBlockLoading(false);
       setIsBlockDialogOpen(false);
     }
@@ -162,10 +132,6 @@ const TrackerDetail: React.FC = () => {
         return <Badge variant="outline">Desconhecido</Badge>;
     }
   };
-
-  if (!isMounted) {
-    return null;
-  }
 
   if (isLoading) {
     return (

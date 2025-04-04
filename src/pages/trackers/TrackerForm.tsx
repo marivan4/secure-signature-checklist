@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -40,7 +39,6 @@ const TrackerForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
   const [isLoading, setIsLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   
   // Inicializa o formulário
   const form = useForm<TrackerFormValues>({
@@ -55,16 +53,9 @@ const TrackerForm: React.FC = () => {
     },
   });
 
-  useEffect(() => {
-    setIsMounted(true);
-    return () => {
-      setIsMounted(false);
-    };
-  }, []);
-
   // Carrega os dados do rastreador se estiver em modo de edição
   useEffect(() => {
-    if (!isMounted || !isEditMode) return;
+    if (!isEditMode) return;
     
     let isActive = true;
     
@@ -112,18 +103,14 @@ const TrackerForm: React.FC = () => {
     return () => {
       isActive = false;
     };
-  }, [form, id, isEditMode, isMounted]);
+  }, [form, id, isEditMode]);
 
   const onSubmit = async (values: TrackerFormValues) => {
-    if (!isMounted) return;
-    
     setIsLoading(true);
     try {
       // Aqui você implementaria a lógica de API para salvar o rastreador
       // Simulando um delay de processamento
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (!isMounted) return;
       
       console.log('Dados do rastreador enviados:', values);
       
@@ -136,20 +123,12 @@ const TrackerForm: React.FC = () => {
       // Redireciona para a lista de rastreadores após salvar
       navigate('/trackers');
     } catch (error) {
-      if (!isMounted) return;
-      
       console.error('Erro ao salvar rastreador:', error);
       toast.error('Erro ao salvar rastreador. Por favor, tente novamente.');
     } finally {
-      if (!isMounted) return;
-      
       setIsLoading(false);
     }
   };
-  
-  if (!isMounted) {
-    return null;
-  }
 
   return (
     <div className="container py-6 md:py-10 px-4 max-w-4xl mx-auto animate-fade-in">
