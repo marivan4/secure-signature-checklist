@@ -17,7 +17,7 @@ import {
   CreditCard,
   FileText,
   Calendar,
-  BuildingStore,
+  Store,
   Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -146,7 +146,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       roles: ['admin', 'manager', 'reseller', 'client'] 
     },
     { 
-      icon: BuildingStore, 
+      icon: Store, 
       label: "Revendas", 
       href: "/resellers", 
       active: currentPath.startsWith('/resellers'),
