@@ -1,11 +1,17 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Tag, ShoppingCart, Star, BookOpen, Package, ShieldCheck, MapPin } from 'lucide-react';
+import { Search, Tag, ShoppingCart, Star, BookOpen, Package, ShieldCheck, MapPin, Plus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Marketplace: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
   // Sample products
   const products = [
     {
@@ -76,6 +82,11 @@ const Marketplace: React.FC = () => {
     },
   ];
 
+  const handleBuyNow = (productId: number) => {
+    // Add the product to cart and navigate to checkout
+    navigate(`/marketplace/checkout`);
+  };
+
   return (
     <div className="container py-6 md:py-10 px-4 max-w-7xl mx-auto animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -85,6 +96,15 @@ const Marketplace: React.FC = () => {
             Produtos, serviços e assinaturas para rastreamento veicular
           </p>
         </div>
+        
+        {(user?.role === 'admin' || user?.role === 'manager' || user?.role === 'reseller') && (
+          <Button asChild>
+            <Link to="/marketplace/products/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Produto
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="all" className="w-full mb-8">
@@ -99,7 +119,7 @@ const Marketplace: React.FC = () => {
         <TabsContent value="all" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} onBuyNow={handleBuyNow} />
             ))}
           </div>
         </TabsContent>
@@ -107,7 +127,7 @@ const Marketplace: React.FC = () => {
         <TabsContent value="trackers" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {products.filter(p => p.category === 'trackers').map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} onBuyNow={handleBuyNow} />
             ))}
           </div>
         </TabsContent>
@@ -115,7 +135,7 @@ const Marketplace: React.FC = () => {
         <TabsContent value="plans" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {products.filter(p => p.category === 'plans').map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} onBuyNow={handleBuyNow} />
             ))}
           </div>
         </TabsContent>
@@ -123,7 +143,7 @@ const Marketplace: React.FC = () => {
         <TabsContent value="accessories" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {products.filter(p => p.category === 'accessories').map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} onBuyNow={handleBuyNow} />
             ))}
           </div>
         </TabsContent>
@@ -131,7 +151,7 @@ const Marketplace: React.FC = () => {
         <TabsContent value="insurance" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {products.filter(p => p.category === 'insurance').map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} onBuyNow={handleBuyNow} />
             ))}
           </div>
         </TabsContent>
@@ -142,7 +162,7 @@ const Marketplace: React.FC = () => {
         <h2 className="text-2xl font-bold tracking-tight mb-4">Produtos em Destaque</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {products.filter(p => p.featured).map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} onBuyNow={handleBuyNow} />
           ))}
         </div>
       </div>
@@ -162,9 +182,10 @@ interface ProductCardProps {
     featured: boolean;
     image: string;
   };
+  onBuyNow: (productId: number) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onBuyNow }) => {
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'trackers':
@@ -223,8 +244,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline">Detalhes</Button>
-        <Button>
+        <Button variant="outline" asChild>
+          <Link to={`/marketplace/products/${product.id}`}>
+            Detalhes
+          </Link>
+        </Button>
+        <Button onClick={() => onBuyNow(product.id)}>
           <ShoppingCart className="mr-2 h-4 w-4" />
           Comprar
         </Button>

@@ -23,6 +23,8 @@ import InvoiceExport from "./components/Invoice/InvoiceExport";
 import Clients from "./pages/Clients";
 import Trackers from "./pages/Trackers";
 import Marketplace from "./pages/Marketplace";
+import ProductDetail from "./pages/marketplace/ProductDetail";
+import Checkout from "./pages/marketplace/Checkout";
 import Insurance from "./pages/Insurance";
 import Plans from "./pages/Plans";
 import NewClient from "./pages/clients/NewClient";
@@ -31,6 +33,9 @@ import TrackerDetail from "./pages/trackers/TrackerDetail";
 import ClientCharge from "./pages/charges/ClientCharge";
 import PublicScheduling from "./pages/scheduling/PublicScheduling";
 import SchedulingSettings from "./pages/scheduling/SchedulingSettings";
+import Resellers from "./pages/Resellers";
+import ResellerDetail from "./pages/resellers/ResellerDetail";
+import ResellerForm from "./pages/resellers/ResellerForm";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -197,10 +202,68 @@ const AppRoutes = () => (
     />
     
     <Route 
+      path="/marketplace/products/:id" 
+      element={
+        <ProtectedRoute>
+          <ProductDetail />
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/marketplace/checkout" 
+      element={
+        <ProtectedRoute>
+          <Checkout />
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
       path="/insurance" 
       element={
         <ProtectedRoute>
           <Insurance />
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/resellers" 
+      element={
+        <ProtectedRoute>
+          <Resellers />
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/resellers/:id" 
+      element={
+        <ProtectedRoute>
+          <ResellerDetail />
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/resellers/new" 
+      element={
+        <ProtectedRoute>
+          <AdminRoute>
+            <ResellerForm />
+          </AdminRoute>
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/resellers/:id/edit" 
+      element={
+        <ProtectedRoute>
+          <AdminRoute>
+            <ResellerForm />
+          </AdminRoute>
         </ProtectedRoute>
       } 
     />
