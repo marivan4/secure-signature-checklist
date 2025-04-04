@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,8 +12,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, Shield, RefreshCw, Users } from 'lucide-react';
 import { getAsaasConfig, saveAsaasConfig, initAsaasApi, getAllAsaasConfigs } from '@/services/asaasApi';
-import { generateMonthlyInvoices, checkOverdueInvoicesAndBlock } from '@/services/invoiceApi';
 import { getAsaasBaseUrl } from '@/services/apiConfig';
+import { generateMonthlyInvoices, checkOverdueInvoicesAndBlock } from '@/services/invoiceApi';
 import { AsaasConfig } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -42,7 +41,6 @@ const AsaasSettings: React.FC = () => {
   });
 
   useEffect(() => {
-    // Safety check to prevent state updates on unmounted component
     let isMounted = true;
 
     if (user?.role === 'admin' && isMounted) {
@@ -67,7 +65,6 @@ const AsaasSettings: React.FC = () => {
   };
 
   useEffect(() => {
-    // Safety check to prevent state updates on unmounted component
     let isMounted = true;
 
     const loadConfig = async () => {
@@ -76,7 +73,6 @@ const AsaasSettings: React.FC = () => {
         try {
           const config = await getAsaasConfig(user.id);
           
-          // Check if component is still mounted before updating state
           if (!isMounted) return;
           
           if (config) {
