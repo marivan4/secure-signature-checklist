@@ -29,6 +29,8 @@ import NewClient from "./pages/clients/NewClient";
 import TrackerForm from "./pages/trackers/TrackerForm";
 import TrackerDetail from "./pages/trackers/TrackerDetail";
 import ClientCharge from "./pages/charges/ClientCharge";
+import PublicScheduling from "./pages/scheduling/PublicScheduling";
+import SchedulingSettings from "./pages/scheduling/SchedulingSettings";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -76,6 +78,11 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<Login />} />
+    
+    <Route 
+      path="/schedule" 
+      element={<PublicScheduling />} 
+    />
     
     <Route 
       path="/dashboard" 
@@ -293,6 +300,17 @@ const AppRoutes = () => (
         <ProtectedRoute>
           <ManagerRoute>
             <AsaasSettings />
+          </ManagerRoute>
+        </ProtectedRoute>
+      } 
+    />
+    
+    <Route 
+      path="/scheduling/settings" 
+      element={
+        <ProtectedRoute>
+          <ManagerRoute>
+            <SchedulingSettings />
           </ManagerRoute>
         </ProtectedRoute>
       } 

@@ -15,7 +15,8 @@ import {
   ChevronRight,
   LogOut,
   CreditCard,
-  FileText
+  FileText,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 label="Nova Fatura" 
                 href="/invoices/new" 
                 active={currentPath === '/invoices/new'} 
+              />
+              <SidebarItem 
+                icon={Calendar} 
+                label="Agendamentos" 
+                href="/scheduling/settings" 
+                active={currentPath.startsWith('/scheduling')} 
               />
               <SidebarItem 
                 icon={Home} 
