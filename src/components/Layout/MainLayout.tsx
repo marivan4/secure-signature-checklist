@@ -16,7 +16,9 @@ import {
   LogOut,
   CreditCard,
   FileText,
-  Calendar
+  Calendar,
+  BuildingStore,
+  Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,9 +32,17 @@ interface SidebarItemProps {
   label: string;
   href: string;
   active?: boolean;
+  roles?: string[];
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, href, active }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, href, active, roles }) => {
+  const { user } = useAuth();
+  
+  // Check if the current user role is allowed to see this item
+  if (roles && user && !roles.includes(user.role)) {
+    return null;
+  }
+  
   return (
     <Link 
       to={href} 
@@ -70,6 +80,94 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     return <div className="min-h-screen animate-fade-in">{children}</div>;
   }
 
+  // Define role-based navigation items with allowed roles
+  const navigationItems: SidebarItemProps[] = [
+    { 
+      icon: LayoutDashboard, 
+      label: "Dashboard", 
+      href: "/dashboard", 
+      active: currentPath === '/dashboard',
+      roles: ['admin', 'manager', 'client', 'reseller', 'end_client']
+    },
+    { 
+      icon: Users, 
+      label: "Clientes", 
+      href: "/clients", 
+      active: currentPath.startsWith('/clients'),
+      roles: ['admin', 'manager', 'reseller'] 
+    },
+    { 
+      icon: MapPin, 
+      label: "Rastreadores", 
+      href: "/trackers", 
+      active: currentPath.startsWith('/trackers'),
+      roles: ['admin', 'manager', 'reseller', 'client'] 
+    },
+    { 
+      icon: DollarSign, 
+      label: "Financeiro", 
+      href: "/invoices", 
+      active: currentPath.startsWith('/invoices'),
+      roles: ['admin', 'manager', 'reseller', 'client', 'end_client'] 
+    },
+    { 
+      icon: CreditCard, 
+      label: "Planos", 
+      href: "/plans", 
+      active: currentPath.startsWith('/plans'),
+      roles: ['admin', 'manager', 'reseller', 'client'] 
+    },
+    { 
+      icon: FileText, 
+      label: "Nova Fatura", 
+      href: "/invoices/new", 
+      active: currentPath === '/invoices/new',
+      roles: ['admin', 'manager', 'reseller'] 
+    },
+    { 
+      icon: Calendar, 
+      label: "Agendamentos", 
+      href: "/scheduling/settings", 
+      active: currentPath.startsWith('/scheduling'),
+      roles: ['admin', 'manager', 'reseller'] 
+    },
+    { 
+      icon: Home, 
+      label: "Marketplace", 
+      href: "/marketplace", 
+      active: currentPath.startsWith('/marketplace'),
+      roles: ['admin', 'manager', 'reseller', 'client'] 
+    },
+    { 
+      icon: Shield, 
+      label: "Seguros", 
+      href: "/insurance", 
+      active: currentPath.startsWith('/insurance'),
+      roles: ['admin', 'manager', 'reseller', 'client'] 
+    },
+    { 
+      icon: BuildingStore, 
+      label: "Revendas", 
+      href: "/resellers", 
+      active: currentPath.startsWith('/resellers'),
+      roles: ['admin'] 
+    },
+    { 
+      icon: Settings, 
+      label: "Administração", 
+      href: "/whatsapp", 
+      active: currentPath.startsWith('/whatsapp') || currentPath.startsWith('/settings'),
+      roles: ['admin', 'reseller'] 
+    },
+    { 
+      icon: Car, 
+      label: "Meus Veículos", 
+      href: "/my-vehicles", 
+      active: currentPath.startsWith('/my-vehicles'),
+      roles: ['client', 'end_client'] 
+    },
+  ];
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -81,69 +179,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </div>
             
             <nav className="space-y-1 flex-1">
-              <SidebarItem 
-                icon={LayoutDashboard} 
-                label="Dashboard" 
-                href="/dashboard" 
-                active={currentPath === '/dashboard'} 
-              />
-              <SidebarItem 
-                icon={Users} 
-                label="Clientes" 
-                href="/clients" 
-                active={currentPath.startsWith('/clients')} 
-              />
-              <SidebarItem 
-                icon={MapPin} 
-                label="Rastreadores" 
-                href="/trackers" 
-                active={currentPath.startsWith('/trackers')} 
-              />
-              <SidebarItem 
-                icon={DollarSign} 
-                label="Financeiro" 
-                href="/invoices" 
-                active={currentPath.startsWith('/invoices')} 
-              />
-              <SidebarItem 
-                icon={CreditCard} 
-                label="Planos" 
-                href="/plans" 
-                active={currentPath.startsWith('/plans')} 
-              />
-              <SidebarItem 
-                icon={FileText} 
-                label="Nova Fatura" 
-                href="/invoices/new" 
-                active={currentPath === '/invoices/new'} 
-              />
-              <SidebarItem 
-                icon={Calendar} 
-                label="Agendamentos" 
-                href="/scheduling/settings" 
-                active={currentPath.startsWith('/scheduling')} 
-              />
-              <SidebarItem 
-                icon={Home} 
-                label="Marketplace" 
-                href="/marketplace" 
-                active={currentPath.startsWith('/marketplace')} 
-              />
-              <SidebarItem 
-                icon={Shield} 
-                label="Seguros" 
-                href="/insurance" 
-                active={currentPath.startsWith('/insurance')} 
-              />
-              
-              {user && user.role === 'admin' && (
+              {navigationItems.map((item, index) => (
                 <SidebarItem 
-                  icon={Settings} 
-                  label="Administração" 
-                  href="/whatsapp" 
-                  active={currentPath.startsWith('/whatsapp') || currentPath.startsWith('/settings')} 
+                  key={index}
+                  icon={item.icon} 
+                  label={item.label} 
+                  href={item.href} 
+                  active={item.active}
+                  roles={item.roles}
                 />
-              )}
+              ))}
             </nav>
             
             <div className="pt-4 mt-4 border-t border-white/20">

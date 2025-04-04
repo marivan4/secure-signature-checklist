@@ -21,7 +21,7 @@ if (!empty($data->username) && !empty($data->password)) {
     $db = $database->getConnection();
     
     // Verificar se o usuário existe
-    $query = "SELECT id, username, password, role, created_at FROM users WHERE username = :username LIMIT 0,1";
+    $query = "SELECT id, username, password, role, parent_id, created_at FROM users WHERE username = :username LIMIT 0,1";
     $stmt = $db->prepare($query);
     $stmt->bindParam(":username", $data->username);
     $stmt->execute();
@@ -32,6 +32,7 @@ if (!empty($data->username) && !empty($data->password)) {
         $username = $row['username'];
         $password = $row['password'];
         $role = $row['role'];
+        $parent_id = $row['parent_id'];
         $created_at = $row['created_at'];
         
         // Verificar senha
@@ -44,6 +45,7 @@ if (!empty($data->username) && !empty($data->password)) {
                 "id" => $id,
                 "username" => $username,
                 "role" => $role,
+                "parentId" => $parent_id,
                 "createdAt" => $created_at
             );
             

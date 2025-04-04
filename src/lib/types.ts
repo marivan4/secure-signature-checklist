@@ -1,8 +1,8 @@
 export interface User {
   id: number;
   username: string;
-  name?: string; // Added name property as optional
-  role: 'admin' | 'client' | 'manager';
+  name?: string;
+  role: 'admin' | 'client' | 'manager' | 'reseller' | 'end_client';
   createdAt: string;
 }
 
@@ -45,9 +45,9 @@ export interface Invoice {
   createdAt: string;
   email?: string;
   phone?: string;
-  asaasId?: string; // ID do pagamento no Asaas
-  blocked?: boolean; // Se o veículo está bloqueado por falta de pagamento
-  billingType?: 'BOLETO' | 'PIX' | 'CREDIT_CARD'; // Tipo de cobrança no Asaas
+  asaasId?: string;
+  blocked?: boolean;
+  billingType?: 'BOLETO' | 'PIX' | 'CREDIT_CARD';
 }
 
 export interface AuthContextType {
@@ -79,13 +79,13 @@ export interface WhatsAppConfig {
   createdAt: string;
 }
 
-// Interfaces para o Asaas
 export interface AsaasConfig {
   id?: number;
   apiKey: string;
   sandbox: boolean;
   userId: number;
   createdAt?: string;
+  userRole?: string;
 }
 
 export interface AsaasCustomer {
@@ -132,7 +132,7 @@ export interface AsaasPayment {
   postalService?: boolean;
   status?: 'PENDING' | 'RECEIVED' | 'CONFIRMED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH' | 'REFUND_REQUESTED' | 'CHARGEBACK_REQUESTED' | 'CHARGEBACK_DISPUTE' | 'AWAITING_CHARGEBACK_REVERSAL' | 'DUNNING_REQUESTED' | 'DUNNING_RECEIVED' | 'AWAITING_RISK_ANALYSIS';
   invoiceUrl?: string;
-  bankSlipUrl?: string; // Added missing property for bank slip URL
+  bankSlipUrl?: string;
   pixQrCodeId?: string;
   invoiceNumber?: string;
   paymentDate?: string;

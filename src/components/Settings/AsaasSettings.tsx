@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, Shield, RefreshCw, Users } from 'lucide-react';
+import { AlertTriangle, Shield, RefreshCw, Users, Building } from 'lucide-react';
 import { getAsaasConfig, saveAsaasConfig, initAsaasApi, getAllAsaasConfigs } from '@/services/asaasApi';
 import { getAsaasBaseUrl } from '@/services/apiConfig';
 import { generateMonthlyInvoices, checkOverdueInvoicesAndBlock } from '@/services/invoiceApi';
@@ -31,6 +32,7 @@ const AsaasSettings: React.FC = () => {
   const [isSandbox, setIsSandbox] = useState(true);
   const [allConfigs, setAllConfigs] = useState<AsaasConfig[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isReseller, setIsReseller] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,6 +48,10 @@ const AsaasSettings: React.FC = () => {
     if (user?.role === 'admin' && isMounted) {
       setIsAdmin(true);
       fetchAllConfigs();
+    }
+    
+    if (user?.role === 'reseller' && isMounted) {
+      setIsReseller(true);
     }
 
     return () => {
@@ -68,7 +74,7 @@ const AsaasSettings: React.FC = () => {
     let isMounted = true;
 
     const loadConfig = async () => {
-      if (user?.id && (user.role === 'admin' || user.role === 'manager')) {
+      if (user?.id && (user.role === 'admin' || user.role === 'manager' || user.role === 'reseller')) {
         setIsLoading(true);
         try {
           const config = await getAsaasConfig(user.id);
@@ -113,6 +119,7 @@ const AsaasSettings: React.FC = () => {
         apiKey: values.apiKey,
         sandbox: values.sandbox,
         userId: user.id,
+        userRole: user.role
       };
       
       const savedConfig = await saveAsaasConfig(config);
@@ -182,7 +189,8 @@ const AsaasSettings: React.FC = () => {
     return null;
   };
 
-  if (!user || (user.role !== 'admin' && user.role !== 'manager')) {
+  // Only admins, resellers and managers can access this page
+  if (!user || (user.role !== 'admin' && user.role !== 'manager' && user.role !== 'reseller')) {
     return null;
   }
 
@@ -216,6 +224,7 @@ const AsaasSettings: React.FC = () => {
             </CardTitle>
             <CardDescription>
               Configure as credenciais de acesso à API do Asaas para processamento de pagamentos
+              {isReseller && ' da sua revenda'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -286,7 +295,7 @@ const AsaasSettings: React.FC = () => {
                 Configurações de Administradores
               </CardTitle>
               <CardDescription>
-                Visualize as configurações do Asaas para todos os administradores do sistema
+                Visualize as configurações do Asaas para todos os administradores e revendas do sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -295,6 +304,7 @@ const AsaasSettings: React.FC = () => {
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Usuário</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Ambiente</TableHead>
                     <TableHead>API Key</TableHead>
                     <TableHead>Data de Criação</TableHead>
@@ -305,7 +315,13 @@ const AsaasSettings: React.FC = () => {
                     allConfigs.map((config) => (
                       <TableRow key={config.id}>
                         <TableCell>{config.id}</TableCell>
-                        <TableCell>Admin #{config.userId}</TableCell>
+                        <TableCell>
+                          {config.userRole === 'reseller' 
+                            ? <span className="flex items-center"><Building className="h-3 w-3 mr-1 text-blue-500" /> Revenda #{config.userId}</span>
+                            : <span className="flex items-center"><Shield className="h-3 w-3 mr-1 text-purple-500" /> Admin #{config.userId}</span>
+                          }
+                        </TableCell>
+                        <TableCell>{config.userRole === 'reseller' ? 'Revenda' : 'Administrador'}</TableCell>
                         <TableCell>{config.sandbox ? 'Sandbox' : 'Produção'}</TableCell>
                         <TableCell>
                           {config.apiKey && config.apiKey.length > 16 ? 
@@ -317,7 +333,7 @@ const AsaasSettings: React.FC = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center">
+                      <TableCell colSpan={6} className="text-center">
                         Nenhuma configuração encontrada
                       </TableCell>
                     </TableRow>
@@ -328,7 +344,7 @@ const AsaasSettings: React.FC = () => {
           </Card>
         )}
 
-        {configLoaded && (
+        {configLoaded && (user?.role === 'admin' || user?.role === 'reseller') && (
           <Card>
             <CardHeader>
               <CardTitle>Ações de Faturamento</CardTitle>

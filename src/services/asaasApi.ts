@@ -8,6 +8,7 @@ import {
 } from './apiConfig';
 
 let currentUserId: number | null = null;
+let currentUserRole: string | null = null;
 
 // Função para inicializar a API Asaas
 export const initAsaasApi = (config: AsaasConfig) => {
@@ -16,6 +17,7 @@ export const initAsaasApi = (config: AsaasConfig) => {
     sandbox: config.sandbox
   });
   currentUserId = config.userId;
+  currentUserRole = config.userRole || null;
 };
 
 // Cria instância do Axios para a API Asaas
@@ -427,6 +429,7 @@ export const getAsaasConfig = async (userId: number): Promise<AsaasConfig | null
         apiKey: '$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjUzZWNjMzUzLTVmM2UtNGMyZi04MGRjLTljNmU4NGU3NTlmMjo6JGFhY2hfYmU4ZGU2NjQtYTU4Yy00NjA0LTgzY2EtNzYxNjE0MDM0MGQ4',
         sandbox: true,
         userId: userId,
+        userRole: 'admin',
         createdAt: new Date().toISOString()
       };
     }
@@ -452,6 +455,7 @@ export const getAllAsaasConfigs = async (): Promise<AsaasConfig[]> => {
           apiKey: '$aact_XXX...XX',
           sandbox: true,
           userId: 1,
+          userRole: 'admin',
           createdAt: new Date().toISOString()
         },
         {
@@ -459,6 +463,15 @@ export const getAllAsaasConfigs = async (): Promise<AsaasConfig[]> => {
           apiKey: '$aact_YYY...YY',
           sandbox: true,
           userId: 2,
+          userRole: 'manager',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 3,
+          apiKey: '$aact_ZZZ...ZZ',
+          sandbox: true,
+          userId: 3,
+          userRole: 'reseller',
           createdAt: new Date().toISOString()
         }
       ];

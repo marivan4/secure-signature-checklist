@@ -74,6 +74,20 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const ResellerRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  if (!user || (user.role !== 'admin' && user.role !== 'reseller')) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
@@ -298,9 +312,9 @@ const AppRoutes = () => (
       path="/settings/asaas" 
       element={
         <ProtectedRoute>
-          <ManagerRoute>
+          <ResellerRoute>
             <AsaasSettings />
-          </ManagerRoute>
+          </ResellerRoute>
         </ProtectedRoute>
       } 
     />

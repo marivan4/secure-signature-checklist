@@ -21,8 +21,10 @@ $sql_users = "CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'manager', 'client') NOT NULL DEFAULT 'client',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    role ENUM('admin', 'manager', 'client', 'reseller', 'end_client') NOT NULL DEFAULT 'client',
+    parent_id INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES usuarios(id) ON DELETE SET NULL
 )";
 
 if ($conn->query($sql_users) === TRUE) {
@@ -35,6 +37,7 @@ if ($conn->query($sql_users) === TRUE) {
 $sql_checklists = "CREATE TABLE IF NOT EXISTS checklists (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    reseller_id INT NULL,
     cpf_cnpj VARCHAR(20) NOT NULL,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255),
@@ -56,7 +59,8 @@ $sql_checklists = "CREATE TABLE IF NOT EXISTS checklists (
     signature_data TEXT,
     signed_at DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES usuarios(id)
+    FOREIGN KEY (user_id) REFERENCES usuarios(id),
+    FOREIGN KEY (reseller_id) REFERENCES usuarios(id)
 )";
 
 if ($conn->query($sql_checklists) === TRUE) {
@@ -67,13 +71,16 @@ if ($conn->query($sql_checklists) === TRUE) {
 
 // Cria tabela de veículos se não existir
 $sql_vehicles = "CREATE TABLE IF NOT EXISTS veiculos (
-    chassis VARCHAR(17) PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    chassis VARCHAR(17),
     linha VARCHAR(50),
     modelo VARCHAR(50),
     data_fabricacao DATE,
     ultima_inspecao DATETIME,
     cliente_id INT,
-    FOREIGN KEY (cliente_id) REFERENCES usuarios(id)
+    reseller_id INT NULL,
+    FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
+    FOREIGN KEY (reseller_id) REFERENCES usuarios(id)
 )";
 
 if ($conn->query($sql_vehicles) === TRUE) {
@@ -86,6 +93,7 @@ if ($conn->query($sql_vehicles) === TRUE) {
 $sql_invoices = "CREATE TABLE IF NOT EXISTS faturas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    reseller_id INT NULL,
     checklist_id INT,
     invoice_number VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
@@ -95,6 +103,7 @@ $sql_invoices = "CREATE TABLE IF NOT EXISTS faturas (
     paid_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES usuarios(id),
+    FOREIGN KEY (reseller_id) REFERENCES usuarios(id),
     FOREIGN KEY (checklist_id) REFERENCES checklists(id) ON DELETE SET NULL
 )";
 
@@ -119,6 +128,23 @@ if ($conn->query($sql_whatsapp_config) === TRUE) {
     echo "<p>Tabela 'whatsapp_config' criada ou já existente.</p>";
 } else {
     echo "<p>Erro ao criar tabela 'whatsapp_config': " . $conn->error . "</p>";
+}
+
+// Cria tabela de configurações do Asaas se não existir
+$sql_asaas_config = "CREATE TABLE IF NOT EXISTS asaas_config (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    api_key VARCHAR(255) NOT NULL,
+    sandbox BOOLEAN NOT NULL DEFAULT 1,
+    user_role VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES usuarios(id)
+)";
+
+if ($conn->query($sql_asaas_config) === TRUE) {
+    echo "<p>Tabela 'asaas_config' criada ou já existente.</p>";
+} else {
+    echo "<p>Erro ao criar tabela 'asaas_config': " . $conn->error . "</p>";
 }
 
 // Cria tabela de configurações do sistema se não existir
@@ -212,6 +238,46 @@ if ($result->num_rows == 0) {
     }
 } else {
     echo "<p>Usuário gerente já existe.</p>";
+}
+
+// Adiciona usuário revenda de teste se não existir
+$check_reseller = "SELECT * FROM usuarios WHERE username = 'reseller'";
+$result = $conn->query($check_reseller);
+
+if ($result->num_rows == 0) {
+    // Senha padrão 'reseller' com hash
+    $hashed_password = password_hash('reseller', PASSWORD_DEFAULT);
+    
+    $insert_reseller = "INSERT INTO usuarios (username, password, role) 
+                     VALUES ('reseller', '$hashed_password', 'reseller')";
+    
+    if ($conn->query($insert_reseller) === TRUE) {
+        echo "<p>Usuário revenda padrão criado com senha 'reseller'.</p>";
+    } else {
+        echo "<p>Erro ao criar usuário revenda: " . $conn->error . "</p>";
+    }
+} else {
+    echo "<p>Usuário revenda já existe.</p>";
+}
+
+// Adiciona usuário cliente final de teste se não existir
+$check_end_client = "SELECT * FROM usuarios WHERE username = 'endclient'";
+$result = $conn->query($check_end_client);
+
+if ($result->num_rows == 0) {
+    // Senha padrão 'endclient' com hash
+    $hashed_password = password_hash('endclient', PASSWORD_DEFAULT);
+    
+    $insert_end_client = "INSERT INTO usuarios (username, password, role) 
+                    VALUES ('endclient', '$hashed_password', 'end_client')";
+    
+    if ($conn->query($insert_end_client) === TRUE) {
+        echo "<p>Usuário cliente final padrão criado com senha 'endclient'.</p>";
+    } else {
+        echo "<p>Erro ao criar usuário cliente final: " . $conn->error . "</p>";
+    }
+} else {
+    echo "<p>Usuário cliente final já existe.</p>";
 }
 
 echo "<h2>Configuração do banco de dados concluída!</h2>";

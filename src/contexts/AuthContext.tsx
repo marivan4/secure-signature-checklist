@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         user = response.data;
       } else {
-        // Mock login para desenvolvimento
+        // Mock login para desenvolvimento com os novos papéis
         if (username === 'admin' && password === 'admin') {
           user = {
             id: 1,
@@ -53,6 +53,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: 2,
             username: 'client',
             role: 'client',
+            createdAt: new Date().toISOString()
+          };
+        } else if (username === 'reseller' && password === 'reseller') {
+          user = {
+            id: 3,
+            username: 'reseller',
+            role: 'reseller',
+            createdAt: new Date().toISOString()
+          };
+        } else if (username === 'endclient' && password === 'endclient') {
+          user = {
+            id: 4,
+            username: 'endclient',
+            role: 'end_client',
             createdAt: new Date().toISOString()
           };
         }

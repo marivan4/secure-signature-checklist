@@ -19,7 +19,9 @@ import {
   Home, 
   ClipboardList, 
   FileText,
-  MessageSquare
+  MessageSquare,
+  Settings,
+  CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -44,17 +46,24 @@ const Header: React.FC = () => {
     setMenuOpen(false);
   };
 
-  const menuItems = [
-    { label: 'Início', path: '/dashboard', icon: <Home className="mr-2 h-4 w-4" /> },
-    { label: 'Contratos', path: '/checklist/new', icon: <ClipboardList className="mr-2 h-4 w-4" />, roles: ['admin'] },
-    { label: 'Faturas', path: '/invoices', icon: <FileText className="mr-2 h-4 w-4" /> },
-    { label: 'WhatsApp', path: '/whatsapp', icon: <MessageSquare className="mr-2 h-4 w-4" />, roles: ['admin', 'manager'] },
-  ];
+  // Define menu items with their allowed roles
+  const getMenuItems = () => {
+    const items = [
+      { label: 'Início', path: '/dashboard', icon: <Home className="mr-2 h-4 w-4" />, roles: ['admin', 'manager', 'client', 'reseller', 'end_client'] },
+      { label: 'Contratos', path: '/checklist/new', icon: <ClipboardList className="mr-2 h-4 w-4" />, roles: ['admin', 'reseller'] },
+      { label: 'Faturas', path: '/invoices', icon: <FileText className="mr-2 h-4 w-4" />, roles: ['admin', 'manager', 'client', 'reseller', 'end_client'] },
+      { label: 'WhatsApp', path: '/whatsapp', icon: <MessageSquare className="mr-2 h-4 w-4" />, roles: ['admin', 'reseller'] },
+      { label: 'Asaas', path: '/settings/asaas', icon: <CreditCard className="mr-2 h-4 w-4" />, roles: ['admin', 'reseller'] },
+      { label: 'Configurações', path: '/settings', icon: <Settings className="mr-2 h-4 w-4" />, roles: ['admin'] },
+    ];
 
-  // Filtra itens de menu com base na função do usuário
-  const filteredMenuItems = menuItems.filter(item => 
-    !item.roles || item.roles.includes(user?.role || '')
-  );
+    // Filtra itens de menu com base na função do usuário
+    return items.filter(item => 
+      !item.roles || (user && item.roles.includes(user.role))
+    );
+  };
+
+  const filteredMenuItems = getMenuItems();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
@@ -98,6 +107,13 @@ const Header: React.FC = () => {
                   <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                   <DropdownMenuItem className="text-muted-foreground">
                     {user.username}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-muted-foreground">
+                    {user.role === 'admin' && 'Administrador'}
+                    {user.role === 'manager' && 'Gerente'}
+                    {user.role === 'client' && 'Cliente'}
+                    {user.role === 'reseller' && 'Revenda'}
+                    {user.role === 'end_client' && 'Cliente Final'}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
