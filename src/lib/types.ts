@@ -1,7 +1,14 @@
+
 export interface User {
   id: number;
   username: string;
   name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   role: 'admin' | 'client' | 'manager' | 'reseller' | 'end_client';
   createdAt: string;
 }

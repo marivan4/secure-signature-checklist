@@ -23,7 +23,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { createInvoice } from '@/services/invoiceApi';
 
-// Mock data for the cart items
+// Sample products
 const cartItems = [
   {
     id: 1,
