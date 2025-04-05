@@ -45,8 +45,7 @@ VITE_WHATSAPP_API_TOKEN=seu_token_whatsapp
 ### 4. Configuração do banco de dados
 
 1. Crie um banco de dados MySQL para o projeto
-2. Importe o arquivo SQL de estrutura do banco (`db/structure.sql`)
-3. Configure as credenciais no arquivo `public/api/config/database.php`
+2. Configure as credenciais no arquivo `public/api/config/database.php`:
 
 ```php
 <?php
@@ -55,6 +54,16 @@ define('DB_NAME', 'nome_do_banco');
 define('DB_USER', 'usuario_mysql');
 define('DB_PASS', 'senha_mysql');
 ```
+
+3. Execute o script de configuração do banco de dados acessando:
+   ```
+   http://seu-dominio.com/db_setup.php
+   ```
+
+4. Após a conclusão, remova o arquivo `db_setup.php` por segurança:
+   ```bash
+   rm public/db_setup.php
+   ```
 
 ### 5. Configuração do servidor web
 
@@ -118,9 +127,23 @@ npm run build
 
 1. Acesse o front-end em `http://seu-dominio.com`
 2. Teste a API acessando `http://seu-dominio.com/api/test-connection.php`
-3. Verifique a conexão com o banco de dados em `http://seu-dominio.com/dbtest.php`
+3. Verifique a configuração do sistema em `http://seu-dominio.com/system-check.php`
 
-### 8. Configurações adicionais
+### 8. Credenciais padrão
+
+O sistema é instalado com os seguintes usuários padrão:
+
+| Usuário     | Senha       | Função       |
+|-------------|-------------|--------------|
+| admin       | admin       | Administrador|
+| manager     | manager     | Gerente      |
+| client      | client      | Cliente      |
+| reseller    | reseller    | Revendedor   |
+| endclient   | endclient   | Cliente Final|
+
+**IMPORTANTE:** Altere estas senhas após o primeiro login!
+
+### 9. Configurações adicionais
 
 #### Integração com Asaas
 
