@@ -25,7 +25,7 @@ const ResellerIntegrations: React.FC = () => {
             </TabsList>
             
             <TabsContent value="asaas">
-              <AsaasSettings isReseller={true} />
+              <AsaasSettings />
             </TabsContent>
             
             <TabsContent value="whatsapp">
