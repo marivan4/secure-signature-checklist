@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -52,7 +53,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
-          <Route element={<MainLayout />}>
+          <Route path="/" element={<MainLayout>Main content</MainLayout>}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/clients/new" element={<NewClient />} />
