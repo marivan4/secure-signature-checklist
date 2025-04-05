@@ -9,12 +9,12 @@ $username = "checklist_user";
 $password = "sua_senha_segura";
 $dbname = "checklist_manager";
 
-// Create connection
-$conn = new mysqli($host, $username, $password);
+// Create connection to MySQL server (without database)
+$conn = new mysqli($host, 'root', ''); // First connect as root to create user
 
 // Check connection
 if ($conn->connect_error) {
-    die("<div style='color:red; font-weight:bold;'>Falha na conexão: " . $conn->connect_error . "</div>");
+    die("<div style='color:red; font-weight:bold;'>Falha na conexão ao MySQL: " . $conn->connect_error . "</div>");
 }
 
 echo "<h1>Configuração do banco de dados - Track'n'Me</h1>";
@@ -28,8 +28,39 @@ if ($conn->query($sql) === TRUE) {
     exit;
 }
 
-// Select database
-$conn->select_db($dbname);
+// Create user if not exists and grant privileges
+$sql_check_user = "SELECT user FROM mysql.user WHERE user = '$username'";
+$result = $conn->query($sql_check_user);
+
+if ($result->num_rows == 0) {
+    // User doesn't exist, create it
+    $sql_create_user = "CREATE USER '$username'@'localhost' IDENTIFIED BY '$password'";
+    if ($conn->query($sql_create_user) === TRUE) {
+        echo "<p>✅ Usuário '$username' criado com sucesso.</p>";
+    } else {
+        echo "<p style='color:red'>❌ Erro ao criar usuário: " . $conn->error . "</p>";
+    }
+}
+
+// Grant privileges to user
+$sql_grant = "GRANT ALL PRIVILEGES ON $dbname.* TO '$username'@'localhost'";
+if ($conn->query($sql_grant) === TRUE) {
+    echo "<p>✅ Privilégios concedidos ao usuário '$username'.</p>";
+    $conn->query("FLUSH PRIVILEGES");
+} else {
+    echo "<p style='color:red'>❌ Erro ao conceder privilégios: " . $conn->error . "</p>";
+}
+
+// Now connect to the database with the user
+$conn->close();
+$conn = new mysqli($host, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("<div style='color:red; font-weight:bold;'>Falha na conexão com usuário $username: " . $conn->connect_error . "</div>");
+}
+
+echo "<p>✅ Conectado ao banco de dados com o usuário '$username'.</p>";
 
 // Import SQL structure from file
 $sql_file = file_get_contents("../db/structure.sql");
@@ -60,6 +91,68 @@ if ($success) {
     // Create test users
     createTestUsers($conn);
     echo "<p>O banco de dados foi configurado e populado com dados de teste.</p>";
+    
+    // Create API directory if it doesn't exist
+    $api_dir = __DIR__ . '/api';
+    if (!file_exists($api_dir)) {
+        if (mkdir($api_dir, 0755, true)) {
+            echo "<p>✅ Diretório API criado com sucesso.</p>";
+            
+            // Create config directory inside api
+            $config_dir = $api_dir . '/config';
+            if (!file_exists($config_dir)) {
+                if (mkdir($config_dir, 0755, true)) {
+                    echo "<p>✅ Diretório API/config criado com sucesso.</p>";
+                    
+                    // Create database.php file
+                    $db_config = '<?php
+class Database {
+    // Credenciais do banco de dados
+    private $host = "localhost";
+    private $db_name = "' . $dbname . '";
+    private $username = "' . $username . '";
+    private $password = "' . $password . '";
+    public $conn;
+
+    // Conectar ao banco de dados
+    public function getConnection() {
+        $this->conn = null;
+
+        try {
+            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
+            $this->conn->exec("set names utf8");
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $this->conn;
+        } catch(PDOException $exception) {
+            echo "Erro de conexão: " . $exception->getMessage();
+            return null;
+        }
+    }
+    
+    // Verificar se uma tabela existe
+    public function tableExists($tableName) {
+        try {
+            $result = $this->conn->query("SHOW TABLES LIKE \'{$tableName}\'");
+            return $result->rowCount() > 0;
+        } catch(PDOException $exception) {
+            echo "Erro ao verificar tabela: " . $exception->getMessage();
+            return false;
+        }
+    }
+}
+?>';
+                    
+                    file_put_contents($config_dir . '/database.php', $db_config);
+                    echo "<p>✅ Arquivo de configuração database.php criado com sucesso.</p>";
+                } else {
+                    echo "<p style='color:red'>❌ Não foi possível criar o diretório API/config.</p>";
+                }
+            }
+        } else {
+            echo "<p style='color:red'>❌ Não foi possível criar o diretório API.</p>";
+        }
+    }
+    
     echo "<div style='margin-top: 20px; padding: 10px; background-color: #ffffcc; border: 1px solid #ffcc00;'>";
     echo "<h3>⚠️ Próximos passos:</h3>";
     echo "<ol>";
@@ -77,6 +170,7 @@ if ($success) {
 function createTestUsers($conn) {
     // Create test users if they don't exist yet
     $users = [
+        ['username' => 'admin', 'password' => 'admin', 'role' => 'admin'],
         ['username' => 'client', 'password' => 'client', 'role' => 'client'],
         ['username' => 'manager', 'password' => 'manager', 'role' => 'manager'],
         ['username' => 'reseller', 'password' => 'reseller', 'role' => 'reseller'],

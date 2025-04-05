@@ -44,28 +44,39 @@ VITE_WHATSAPP_API_TOKEN=seu_token_whatsapp
 
 ### 4. Configuração do banco de dados
 
-1. Crie um banco de dados MySQL para o projeto
-2. Configure as credenciais no arquivo `public/api/config/database.php`:
-
-```php
-<?php
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'nome_do_banco');
-define('DB_USER', 'usuario_mysql');
-define('DB_PASS', 'senha_mysql');
-```
-
-3. Execute o script de configuração do banco de dados acessando:
+1. Certifique-se de que o MySQL esteja instalado e em execução
+2. Crie o diretório `db` na raiz do projeto caso não exista
+3. Copie o arquivo `structure.sql` para o diretório `db`
+4. Execute o script de configuração do banco de dados acessando:
    ```
    http://seu-dominio.com/db_setup.php
    ```
+   
+   Este script irá:
+   - Criar o banco de dados caso não exista
+   - Criar o usuário `checklist_user` com as permissões necessárias
+   - Importar a estrutura do banco de dados
+   - Criar os usuários de teste
+   - Configurar os diretórios necessários para a API
 
-4. Após a conclusão, remova o arquivo `db_setup.php` por segurança:
+5. Após a conclusão, remova o arquivo `db_setup.php` por segurança:
    ```bash
    rm public/db_setup.php
    ```
 
-### 5. Configuração do servidor web
+### 5. Verifique a configuração do sistema
+
+Acesse `http://seu-dominio.com/system-check.php` para verificar se tudo está configurado corretamente.
+
+Este script irá verificar:
+- Versão do PHP
+- Extensões PHP necessárias
+- Conexão com o banco de dados
+- Estrutura das tabelas
+- Permissões de diretórios
+- Configuração do servidor web
+
+### 6. Configuração do servidor web
 
 #### Para Apache:
 Certifique-se que o arquivo `.htaccess` está na pasta `public/` com o seguinte conteúdo:
@@ -113,7 +124,7 @@ server {
 }
 ```
 
-### 6. Compilação do front-end
+### 7. Compilação do front-end
 
 ```bash
 # Para ambiente de desenvolvimento
@@ -123,13 +134,13 @@ npm run dev
 npm run build
 ```
 
-### 7. Testando a instalação
+### 8. Testando a instalação
 
 1. Acesse o front-end em `http://seu-dominio.com`
 2. Teste a API acessando `http://seu-dominio.com/api/test-connection.php`
 3. Verifique a configuração do sistema em `http://seu-dominio.com/system-check.php`
 
-### 8. Credenciais padrão
+### 9. Credenciais padrão
 
 O sistema é instalado com os seguintes usuários padrão:
 
@@ -143,7 +154,23 @@ O sistema é instalado com os seguintes usuários padrão:
 
 **IMPORTANTE:** Altere estas senhas após o primeiro login!
 
-### 9. Configurações adicionais
+### 10. Permissões de diretórios
+
+Certifique-se de que os diretórios do sistema possuam as permissões corretas:
+
+```bash
+# Ajuste o dono dos arquivos para o usuário do servidor web
+chown -R www-data:www-data /caminho/para/o/projeto
+
+# Defina permissões apropriadas
+find /caminho/para/o/projeto -type f -exec chmod 644 {} \;
+find /caminho/para/o/projeto -type d -exec chmod 755 {} \;
+
+# Certifique-se que o diretório de uploads seja gravável
+chmod -R 775 /caminho/para/o/projeto/public/uploads
+```
+
+### 11. Configurações adicionais
 
 #### Integração com Asaas
 
@@ -172,13 +199,29 @@ Para atualizar o sistema para uma nova versão:
 ### Problema: Erro de conexão com banco de dados
 - Verifique as credenciais no arquivo `public/api/config/database.php`
 - Certifique-se que o usuário MySQL tem permissões adequadas
+- Execute o comando para verificar se o usuário existe:
+  ```sql
+  SELECT user FROM mysql.user WHERE user = 'checklist_user';
+  ```
+- Para recriar o usuário e conceder permissões:
+  ```sql
+  CREATE USER 'checklist_user'@'localhost' IDENTIFIED BY 'sua_senha_segura';
+  GRANT ALL PRIVILEGES ON checklist_manager.* TO 'checklist_user'@'localhost';
+  FLUSH PRIVILEGES;
+  ```
 
 ### Problema: Rotas não funcionam após recarregar a página
 - Verifique se o arquivo `.htaccess` está configurado corretamente
 - Certifique-se que o mod_rewrite está habilitado no Apache
+- Para habilitar o mod_rewrite no Apache:
+  ```bash
+  sudo a2enmod rewrite
+  sudo systemctl restart apache2
+  ```
 
 ### Problema: API retornando erro 500
 - Verifique os logs de erro do PHP
+- No Ubuntu/Debian: `sudo tail -f /var/log/apache2/error.log`
 - Certifique-se que todas as extensões PHP necessárias estão instaladas
 
 ## Suporte e contato

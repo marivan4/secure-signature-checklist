@@ -15,7 +15,7 @@ if (version_compare(phpversion(), '8.0.0', '>=')) {
 
 // Verificar extensões PHP
 echo "<h2>Extensões PHP</h2>";
-$required_extensions = ['mysqli', 'pdo', 'json', 'mbstring', 'xml', 'curl'];
+$required_extensions = ['mysqli', 'pdo', 'pdo_mysql', 'json', 'mbstring', 'xml', 'curl'];
 echo "<ul>";
 foreach ($required_extensions as $ext) {
     if (extension_loaded($ext)) {
@@ -26,6 +26,22 @@ foreach ($required_extensions as $ext) {
 }
 echo "</ul>";
 
+// Criar diretório API se não existir
+$api_dir = __DIR__ . '/api';
+if (!file_exists($api_dir)) {
+    if (mkdir($api_dir, 0755, true)) {
+        echo "<p class='success'>✅ Diretório API criado com sucesso</p>";
+        
+        // Criar diretório config dentro da API
+        $config_dir = $api_dir . '/config';
+        if (!file_exists($config_dir)) {
+            if (mkdir($config_dir, 0755, true)) {
+                echo "<p class='success'>✅ Diretório API/config criado com sucesso</p>";
+            }
+        }
+    }
+}
+
 // Verificar conexão com o banco de dados
 echo "<h2>Conexão com o Banco de Dados</h2>";
 try {
@@ -33,47 +49,83 @@ try {
     $db_config_file = __DIR__ . '/api/config/database.php';
     if (file_exists($db_config_file)) {
         include $db_config_file;
-        if (defined('DB_HOST') && defined('DB_NAME') && defined('DB_USER') && defined('DB_PASS')) {
-            echo "<p>Usando configurações do arquivo database.php</p>";
-            $host = DB_HOST;
-            $dbname = DB_NAME;
-            $username = DB_USER;
-            $password = DB_PASS;
+        if (class_exists('Database')) {
+            echo "<p>Usando configurações da classe Database</p>";
+            $database = new Database();
+            $conn = $database->getConnection();
+            
+            if ($conn) {
+                echo "<p class='success'>✅ Conexão com o banco de dados estabelecida</p>";
+                
+                // Verificar tabelas
+                $tables = ["usuarios", "checklists", "veiculos", "faturas", "whatsapp_config", 
+                           "system_config", "sim_cards", "operators", "scheduling", "scheduling_config", 
+                           "revendas", "reseller_clients", "asaas_config"];
+                echo "<h3>Tabelas do Banco de Dados</h3>";
+                echo "<ul>";
+                foreach ($tables as $table) {
+                    if ($database->tableExists($table)) {
+                        $stmt = $conn->query("SELECT COUNT(*) as count FROM $table");
+                        $count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+                        echo "<li class='success'>✅ Tabela '$table' - $count registros</li>";
+                    } else {
+                        echo "<li class='error'>❌ Tabela '$table' não encontrada</li>";
+                    }
+                }
+                echo "</ul>";
+            } else {
+                throw new Exception("Não foi possível obter conexão com o banco de dados");
+            }
         } else {
-            throw new Exception("Arquivo de configuração do banco de dados não define as constantes necessárias");
+            throw new Exception("A classe Database não foi encontrada no arquivo de configuração");
         }
     } else {
-        echo "<p>Arquivo de configuração não encontrado, usando valores padrão</p>";
-        $host = "localhost";
-        $dbname = "checklist_manager";
-        $username = "checklist_user";
-        $password = "sua_senha_segura";
-    }
+        // Se o arquivo não existe, vamos criar um modelo básico
+        $db_dir = dirname($db_config_file);
+        if (!file_exists($db_dir)) {
+            mkdir($db_dir, 0755, true);
+        }
+        
+        $db_template = '<?php
+class Database {
+    // Credenciais do banco de dados
+    private $host = "localhost";
+    private $db_name = "checklist_manager";
+    private $username = "checklist_user";
+    private $password = "sua_senha_segura";
+    public $conn;
 
-    $conn = new mysqli($host, $username, $password, $dbname);
-    if ($conn->connect_error) {
-        throw new Exception("Conexão falhou: " . $conn->connect_error);
-    }
-    echo "<p class='success'>✅ Conexão com o banco de dados estabelecida</p>";
-    
-    // Verificar tabelas
-    $tables = ["usuarios", "checklists", "veiculos", "faturas", "whatsapp_config", 
-               "system_config", "sim_cards", "operators", "scheduling", "scheduling_config", 
-               "revendas", "reseller_clients", "asaas_config"];
-    echo "<h3>Tabelas do Banco de Dados</h3>";
-    echo "<ul>";
-    foreach ($tables as $table) {
-        $result = $conn->query("SHOW TABLES LIKE '$table'");
-        if ($result->num_rows > 0) {
-            $count = $conn->query("SELECT COUNT(*) as count FROM $table")->fetch_assoc()['count'];
-            echo "<li class='success'>✅ Tabela '$table' - $count registros</li>";
-        } else {
-            echo "<li class='error'>❌ Tabela '$table' não encontrada</li>";
+    // Conectar ao banco de dados
+    public function getConnection() {
+        $this->conn = null;
+
+        try {
+            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
+            $this->conn->exec("set names utf8");
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $this->conn;
+        } catch(PDOException $exception) {
+            echo "Erro de conexão: " . $exception->getMessage();
+            return null;
         }
     }
-    echo "</ul>";
     
-    $conn->close();
+    // Verificar se uma tabela existe
+    public function tableExists($tableName) {
+        try {
+            $result = $this->conn->query("SHOW TABLES LIKE \'{$tableName}\'");
+            return $result->rowCount() > 0;
+        } catch(PDOException $exception) {
+            echo "Erro ao verificar tabela: " . $exception->getMessage();
+            return false;
+        }
+    }
+}
+?>';
+        file_put_contents($db_config_file, $db_template);
+        echo "<p class='notice'>ℹ️ Arquivo de configuração database.php criado com modelo padrão. Edite-o para configurar suas credenciais.</p>";
+        throw new Exception("Arquivo de configuração database.php não encontrado. Um modelo foi criado para você.");
+    }
 } catch (Exception $e) {
     echo "<p class='error'>❌ " . $e->getMessage() . "</p>";
 }
