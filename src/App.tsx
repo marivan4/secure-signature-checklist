@@ -53,7 +53,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<MainLayout>{/* MainLayout já recebe children como props */}</MainLayout>}>
+          <Route path="/" element={<MainLayout>{/* Outlet will render child routes */}</MainLayout>}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/clients/new" element={<NewClient />} />
