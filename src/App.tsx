@@ -28,6 +28,11 @@ import Resellers from '@/pages/Resellers';
 import ResellerForm from '@/pages/resellers/ResellerForm';
 import ResellerDetail from '@/pages/resellers/ResellerDetail';
 
+// Import new pages
+import NewInvoice from '@/pages/invoices/NewInvoice';
+import Settings from '@/pages/Settings';
+import AsaasIntegration from '@/pages/integrations/AsaasIntegration';
+
 // Reseller Dashboard Components
 import ResellerDashboard from '@/pages/reseller-dashboard/ResellerDashboard';
 import ResellerHome from '@/pages/reseller-dashboard/ResellerHome';
@@ -67,6 +72,7 @@ function App() {
             <Route path="/clients" element={<Clients />} />
             <Route path="/clients/new" element={<NewClient />} />
             <Route path="/invoices" element={<Invoices />} />
+            <Route path="/invoices/new" element={<NewInvoice />} />
             <Route path="/trackers" element={<Trackers />} />
             <Route path="/trackers/new" element={<TrackerForm />} />
             <Route path="/trackers/:id" element={<TrackerDetail />} />
@@ -76,6 +82,8 @@ function App() {
             <Route path="/marketplace/checkout" element={<Checkout />} />
             <Route path="/insurance" element={<Insurance />} />
             <Route path="/whatsapp" element={<WhatsAppSettings />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/integrations/asaas" element={<AsaasIntegration />} />
             <Route path="/resellers" element={<Resellers />} />
             <Route path="/resellers/new" element={<ResellerForm />} />
             <Route path="/resellers/:id" element={<ResellerDetail />} />

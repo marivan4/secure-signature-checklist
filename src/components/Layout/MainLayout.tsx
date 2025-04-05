@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -107,15 +106,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       icon: DollarSign, 
       label: "Financeiro", 
       href: "/invoices", 
-      active: currentPath.startsWith('/invoices'),
+      active: currentPath === '/invoices',
       roles: ['admin', 'manager', 'reseller', 'client', 'end_client'] 
-    },
-    { 
-      icon: CreditCard, 
-      label: "Planos", 
-      href: "/plans", 
-      active: currentPath.startsWith('/plans'),
-      roles: ['admin', 'manager', 'reseller', 'client'] 
     },
     { 
       icon: FileText, 
@@ -123,6 +115,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       href: "/invoices/new", 
       active: currentPath === '/invoices/new',
       roles: ['admin', 'manager', 'reseller'] 
+    },
+    { 
+      icon: CreditCard, 
+      label: "Planos", 
+      href: "/plans", 
+      active: currentPath.startsWith('/plans'),
+      roles: ['admin', 'manager', 'reseller', 'client'] 
     },
     { 
       icon: Calendar, 
@@ -154,9 +153,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     },
     { 
       icon: Settings, 
-      label: "Administração", 
-      href: "/whatsapp", 
-      active: currentPath.startsWith('/whatsapp') || currentPath.startsWith('/settings'),
+      label: "Configurações", 
+      href: "/settings", 
+      active: currentPath === '/settings' || currentPath.startsWith('/integrations'),
       roles: ['admin', 'reseller'] 
     },
     { 
