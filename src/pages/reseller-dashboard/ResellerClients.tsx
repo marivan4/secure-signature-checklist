@@ -1,239 +1,198 @@
+
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
-
-// Mock data for reseller clients
-const mockClients = [
-  {
-    id: 1,
-    name: 'João Silva',
-    email: 'joao.silva@exemplo.com',
-    phone: '(11) 98765-4321',
-    cpfCnpj: '123.456.789-00',
-    city: 'São Paulo',
-    state: 'SP',
-    status: 'active',
-    createdAt: '2023-05-10T10:30:00Z'
-  },
-  {
-    id: 2,
-    name: 'Maria Santos',
-    email: 'maria.santos@exemplo.com',
-    phone: '(11) 97654-3210',
-    cpfCnpj: '987.654.321-00',
-    city: 'Campinas',
-    state: 'SP',
-    status: 'active',
-    createdAt: '2023-06-15T14:20:00Z'
-  },
-  {
-    id: 3,
-    name: 'Pedro Oliveira',
-    email: 'pedro.oliveira@exemplo.com',
-    phone: '(11) 95432-1098',
-    cpfCnpj: '456.789.123-00',
-    city: 'Guarulhos',
-    state: 'SP',
-    status: 'inactive',
-    createdAt: '2023-07-20T09:15:00Z'
-  },
-  {
-    id: 4,
-    name: 'Ana Costa',
-    email: 'ana.costa@exemplo.com',
-    phone: '(11) 94321-0987',
-    cpfCnpj: '789.123.456-00',
-    city: 'Santo André',
-    state: 'SP',
-    status: 'pending',
-    createdAt: '2023-08-05T16:45:00Z'
-  }
-];
+import { Label } from '@/components/ui/label';
+import { Users, Search, Plus, Filter, X } from 'lucide-react';
 
 const ResellerClients: React.FC = () => {
-  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [filteredStatus, setFilteredStatus] = useState('all');
   
-  const deleteClient = (id: number) => {
-    // In a real application, this would call an API to delete the client
-    toast.success(`Cliente ${id} excluído com sucesso!`);
+  // Mock clients data
+  const clients = [
+    {
+      id: 1,
+      name: 'João Silva',
+      email: 'joao@example.com',
+      phone: '(11) 99999-8888',
+      status: 'active',
+      vehicles: 2,
+      lastPayment: '2023-10-15',
+    },
+    {
+      id: 2,
+      name: 'Maria Oliveira',
+      email: 'maria@example.com',
+      phone: '(11) 97777-6666',
+      status: 'inactive',
+      vehicles: 1,
+      lastPayment: '2023-09-20',
+    },
+    {
+      id: 3,
+      name: 'Carlos Santos',
+      email: 'carlos@example.com',
+      phone: '(11) 95555-4444',
+      status: 'pending',
+      vehicles: 3,
+      lastPayment: '2023-10-05',
+    },
+    {
+      id: 4,
+      name: 'Ana Pereira',
+      email: 'ana@example.com',
+      phone: '(11) 93333-2222',
+      status: 'active',
+      vehicles: 1,
+      lastPayment: '2023-10-18',
+    },
+  ];
+
+  // Filter clients based on search term and status
+  const filteredClients = clients.filter(client => {
+    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         client.phone.includes(searchTerm);
+    
+    const matchesStatus = filteredStatus === 'all' || client.status === filteredStatus;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
   
-  // Format date to Brazilian format (DD/MM/YYYY)
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+  // Handle filter change
+  const handleFilterChange = (value: string) => {
+    setFilteredStatus(value);
   };
   
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  // Clear filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilteredStatus('all');
+  };
+  
+  // Get status badge class
+  const getStatusBadgeClass = (status: string) => {
+    switch(status) {
       case 'active':
-        return <Badge className="bg-green-500">Ativo</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500">Pendente</Badge>;
+        return 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium';
       case 'inactive':
-        return <Badge className="bg-gray-500">Inativo</Badge>;
+        return 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium';
       default:
-        return <Badge>Desconhecido</Badge>;
+        return 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium';
     }
   };
-  
-  // Filter clients by status and search term
-  const filteredClients = mockClients
-    .filter(client => filter === 'all' || client.status === filter)
-    .filter(client => 
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.cpfCnpj.includes(searchTerm)
-    );
-  
+
   return (
     <TabsContent value="clients" className="mt-0">
       <Card>
-        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <CardTitle>Gerenciamento de Clientes</CardTitle>
-            <CardDescription>
-              Gerencie os clientes da sua revenda
-            </CardDescription>
-          </div>
-          
-          <Button asChild>
-            <Link to="/reseller-dashboard/clients/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Cliente
-            </Link>
-          </Button>
+        <CardHeader>
+          <CardTitle className="text-2xl">Clientes da Revenda</CardTitle>
+          <CardDescription>
+            Gerencie os clientes cadastrados na sua revenda
+          </CardDescription>
         </CardHeader>
-        
         <CardContent>
-          <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col sm:flex-row justify-between mb-6">
+            <div className="relative mb-4 sm:mb-0 w-full sm:w-96">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <Input
-                placeholder="Buscar cliente..."
-                className="pl-8"
+                type="search"
+                placeholder="Buscar clientes..."
+                className="pl-10"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
               />
             </div>
             
-            <div className="flex gap-2">
-              <Button 
-                variant={filter === 'all' ? 'default' : 'outline'} 
-                onClick={() => setFilter('all')}
-                size="sm"
-              >
-                Todos
-              </Button>
-              <Button 
-                variant={filter === 'active' ? 'default' : 'outline'} 
-                onClick={() => setFilter('active')}
-                size="sm"
-              >
-                Ativos
-              </Button>
-              <Button 
-                variant={filter === 'pending' ? 'default' : 'outline'} 
-                onClick={() => setFilter('pending')}
-                size="sm"
-              >
-                Pendentes
-              </Button>
-              <Button 
-                variant={filter === 'inactive' ? 'default' : 'outline'} 
-                onClick={() => setFilter('inactive')}
-                size="sm"
-              >
-                Inativos
+            <div className="flex space-x-2">
+              <Tabs defaultValue={filteredStatus} value={filteredStatus} onValueChange={handleFilterChange} className="w-full sm:w-auto">
+                <TabsList>
+                  <TabsTrigger value="all">Todos</TabsTrigger>
+                  <TabsTrigger value="active">Ativos</TabsTrigger>
+                  <TabsTrigger value="inactive">Inativos</TabsTrigger>
+                  <TabsTrigger value="pending">Pendentes</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              {(searchTerm || filteredStatus !== 'all') && (
+                <Button variant="outline" size="icon" onClick={clearFilters} className="flex-shrink-0">
+                  <X size={18} />
+                </Button>
+              )}
+              
+              <Button className="flex-shrink-0">
+                <Plus size={18} className="mr-2" />
+                Novo Cliente
               </Button>
             </div>
           </div>
           
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>CPF/CNPJ</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Cadastro</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClients.length > 0 ? (
-                filteredClients.map((client) => (
-                  <TableRow key={client.id}>
-                    <TableCell className="font-medium">{client.name}</TableCell>
-                    <TableCell>{client.cpfCnpj}</TableCell>
-                    <TableCell>{client.email}</TableCell>
-                    <TableCell>{client.phone}</TableCell>
-                    <TableCell>{getStatusBadge(client.status)}</TableCell>
-                    <TableCell>{formatDate(client.createdAt)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="icon" asChild>
-                          <Link to={`/reseller-dashboard/clients/${client.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="outline" size="icon" asChild>
-                          <Link to={`/reseller-dashboard/clients/${client.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          onClick={() => deleteClient(client.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4">
-                    Nenhum cliente encontrado com os filtros atuais.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          {filteredClients.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum cliente encontrado</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Tente ajustar seus filtros ou adicione um novo cliente.
+              </p>
+              <div className="mt-6">
+                <Button>
+                  <Plus size={18} className="mr-2" />
+                  Adicionar cliente
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Nome</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Contato</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Status</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Veículos</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">Último Pagamento</th>
+                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-500">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredClients.map((client) => (
+                    <tr key={client.id} className="border-b hover:bg-gray-50">
+                      <td className="py-4 px-4">
+                        <div className="font-medium">{client.name}</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div>{client.email}</div>
+                        <div className="text-sm text-gray-500">{client.phone}</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className={getStatusBadgeClass(client.status)}>
+                          {client.status === 'active' && 'Ativo'}
+                          {client.status === 'inactive' && 'Inativo'}
+                          {client.status === 'pending' && 'Pendente'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">{client.vehicles}</td>
+                      <td className="py-4 px-4">{new Date(client.lastPayment).toLocaleDateString('pt-BR')}</td>
+                      <td className="py-4 px-4 text-right">
+                        <Button variant="ghost" size="sm">Detalhes</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          <div className="text-sm text-muted-foreground">
-            Mostrando {filteredClients.length} de {mockClients.length} clientes
-          </div>
-        </CardFooter>
       </Card>
     </TabsContent>
   );
