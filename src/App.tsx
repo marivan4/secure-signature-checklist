@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster as SonnerToaster } from 'sonner';
@@ -40,6 +40,15 @@ import './App.css';
 // Create a client
 const queryClient = new QueryClient();
 
+// Layout wrapper component to handle the Outlet
+const LayoutWrapper = () => {
+  return (
+    <MainLayout>
+      <Outlet />
+    </MainLayout>
+  );
+};
+
 function App() {
   useEffect(() => {
     document.title = 'Checklist Manager';
@@ -53,7 +62,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<MainLayout>{/* Outlet will render child routes */}</MainLayout>}>
+          <Route element={<LayoutWrapper />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/clients/new" element={<NewClient />} />
