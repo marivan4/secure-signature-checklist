@@ -1,232 +1,232 @@
 
 <?php
-// Database setup for Track'n'Me System
-header('Content-Type: text/html; charset=utf-8');
+// Database setup script for Track'n'Me system
+header('Content-Type: text/html; charset=UTF-8');
 
-// Configuration
-$host = "localhost";
-$username = "checklist_user";
-$password = "sua_senha_segura";
-$dbname = "checklist_manager";
+// Configuration variables
+$db_host = 'localhost';
+$db_name = 'checklist_manager';
+$db_user = 'checklist_user';
+$db_pass = 'secure_password_123'; // You should change this in production
 
-// Create connection to MySQL server (without database)
-$conn = new mysqli($host, 'root', ''); // First connect as root to create user
+// Connect to MySQL without selecting a database
+$conn = new mysqli($db_host, 'root', ''); // Using root to create database and user
 
 // Check connection
 if ($conn->connect_error) {
-    die("<div style='color:red; font-weight:bold;'>Falha na conexão ao MySQL: " . $conn->connect_error . "</div>");
+    die('Conexão falhou: ' . $conn->connect_error);
 }
 
-echo "<h1>Configuração do banco de dados - Track'n'Me</h1>";
+echo "<h1>Track'n'Me - Configuração do Banco de Dados</h1>";
+echo "<div style='font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;'>";
 
 // Create database if not exists
-$sql = "CREATE DATABASE IF NOT EXISTS $dbname CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
+$sql = "CREATE DATABASE IF NOT EXISTS $db_name CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
 if ($conn->query($sql) === TRUE) {
-    echo "<p>✅ Banco de dados '$dbname' criado ou já existente.</p>";
+    echo "<p>✅ Banco de dados '$db_name' criado com sucesso.</p>";
 } else {
-    echo "<p style='color:red'>❌ Erro ao criar banco de dados: " . $conn->error . "</p>";
-    exit;
+    echo "<p>❌ Erro ao criar banco de dados: " . $conn->error . "</p>";
 }
 
 // Create user if not exists and grant privileges
-$sql_check_user = "SELECT user FROM mysql.user WHERE user = '$username'";
-$result = $conn->query($sql_check_user);
+$sql = "SELECT user FROM mysql.user WHERE user = '$db_user'";
+$result = $conn->query($sql);
 
 if ($result->num_rows == 0) {
     // User doesn't exist, create it
-    $sql_create_user = "CREATE USER '$username'@'localhost' IDENTIFIED BY '$password'";
-    if ($conn->query($sql_create_user) === TRUE) {
-        echo "<p>✅ Usuário '$username' criado com sucesso.</p>";
+    $sql = "CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_pass'";
+    if ($conn->query($sql) === TRUE) {
+        echo "<p>✅ Usuário '$db_user' criado com sucesso.</p>";
     } else {
-        echo "<p style='color:red'>❌ Erro ao criar usuário: " . $conn->error . "</p>";
+        echo "<p>❌ Erro ao criar usuário: " . $conn->error . "</p>";
     }
 }
 
-// Grant privileges to user
-$sql_grant = "GRANT ALL PRIVILEGES ON $dbname.* TO '$username'@'localhost'";
-if ($conn->query($sql_grant) === TRUE) {
-    echo "<p>✅ Privilégios concedidos ao usuário '$username'.</p>";
+// Grant privileges to the user
+$sql = "GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'localhost'";
+if ($conn->query($sql) === TRUE) {
+    echo "<p>✅ Privilégios concedidos ao usuário '$db_user'.</p>";
     $conn->query("FLUSH PRIVILEGES");
 } else {
-    echo "<p style='color:red'>❌ Erro ao conceder privilégios: " . $conn->error . "</p>";
+    echo "<p>❌ Erro ao conceder privilégios: " . $conn->error . "</p>";
 }
 
-// Now connect to the database with the user
-$conn->close();
-$conn = new mysqli($host, $username, $password, $dbname);
+// Connect to the newly created database
+$conn->select_db($db_name);
 
-// Check connection
-if ($conn->connect_error) {
-    die("<div style='color:red; font-weight:bold;'>Falha na conexão com usuário $username: " . $conn->connect_error . "</div>");
-}
+// Check if tables exist
+$sql = "SHOW TABLES";
+$result = $conn->query($sql);
+$tableCount = $result->num_rows;
 
-echo "<p>✅ Conectado ao banco de dados com o usuário '$username'.</p>";
-
-// Import SQL structure from file
-$sql_file = file_get_contents("../db/structure.sql");
-
-if ($sql_file === false) {
-    echo "<p style='color:red'>❌ Erro ao ler arquivo SQL. Verifique se o arquivo db/structure.sql existe.</p>";
-    exit;
-}
-
-// Split SQL file into separate queries
-$queries = explode(';', $sql_file);
-$success = true;
-
-foreach ($queries as $query) {
-    $query = trim($query);
-    if (empty($query)) continue;
-    
-    if ($conn->query($query) !== TRUE) {
-        echo "<p style='color:red'>❌ Erro na consulta: " . $conn->error . "</p>";
-        echo "<p>Consulta que falhou: " . htmlspecialchars($query) . "</p>";
-        $success = false;
-        break;
-    }
-}
-
-if ($success) {
-    echo "<h2>✅ Configuração do banco de dados concluída com sucesso!</h2>";
-    // Create test users
-    createTestUsers($conn);
-    echo "<p>O banco de dados foi configurado e populado com dados de teste.</p>";
-    
-    // Create API directory if it doesn't exist
-    $api_dir = __DIR__ . '/api';
-    if (!file_exists($api_dir)) {
-        if (mkdir($api_dir, 0755, true)) {
-            echo "<p>✅ Diretório API criado com sucesso.</p>";
-            
-            // Create config directory inside api
-            $config_dir = $api_dir . '/config';
-            if (!file_exists($config_dir)) {
-                if (mkdir($config_dir, 0755, true)) {
-                    echo "<p>✅ Diretório API/config criado com sucesso.</p>";
-                    
-                    // Create database.php file
-                    $db_config = '<?php
-class Database {
-    // Credenciais do banco de dados
-    private $host = "localhost";
-    private $db_name = "' . $dbname . '";
-    private $username = "' . $username . '";
-    private $password = "' . $password . '";
-    public $conn;
-
-    // Conectar ao banco de dados
-    public function getConnection() {
-        $this->conn = null;
-
-        try {
-            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
-            $this->conn->exec("set names utf8");
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $this->conn;
-        } catch(PDOException $exception) {
-            echo "Erro de conexão: " . $exception->getMessage();
-            return null;
-        }
-    }
-    
-    // Verificar se uma tabela existe
-    public function tableExists($tableName) {
-        try {
-            $result = $this->conn->query("SHOW TABLES LIKE \'{$tableName}\'");
-            return $result->rowCount() > 0;
-        } catch(PDOException $exception) {
-            echo "Erro ao verificar tabela: " . $exception->getMessage();
-            return false;
-        }
-    }
-}
-?>';
-                    
-                    file_put_contents($config_dir . '/database.php', $db_config);
-                    echo "<p>✅ Arquivo de configuração database.php criado com sucesso.</p>";
-                } else {
-                    echo "<p style='color:red'>❌ Não foi possível criar o diretório API/config.</p>";
-                }
-            }
-        } else {
-            echo "<p style='color:red'>❌ Não foi possível criar o diretório API.</p>";
-        }
-    }
-    
-    echo "<div style='margin-top: 20px; padding: 10px; background-color: #ffffcc; border: 1px solid #ffcc00;'>";
-    echo "<h3>⚠️ Próximos passos:</h3>";
-    echo "<ol>";
-    echo "<li>Por segurança, <strong>remova este arquivo</strong> (db_setup.php) após a configuração.</li>";
-    echo "<li>Verifique a configuração do sistema em <a href='/system-check.php'>system-check.php</a>.</li>";
-    echo "<li>Acesse o sistema com o usuário <strong>admin</strong> e senha <strong>admin</strong>.</li>";
-    echo "<li>Altere a senha do administrador imediatamente após o primeiro login.</li>";
-    echo "</ol>";
-    echo "</div>";
+if ($tableCount > 0) {
+    echo "<p>✅ O banco de dados já contém $tableCount tabelas.</p>";
 } else {
-    echo "<h2 style='color:red'>❌ Ocorreram erros durante a configuração do banco de dados.</h2>";
-    echo "<p>Revise os erros acima e tente novamente.</p>";
-}
-
-function createTestUsers($conn) {
-    // Create test users if they don't exist yet
-    $users = [
-        ['username' => 'admin', 'password' => 'admin', 'role' => 'admin'],
-        ['username' => 'client', 'password' => 'client', 'role' => 'client'],
-        ['username' => 'manager', 'password' => 'manager', 'role' => 'manager'],
-        ['username' => 'reseller', 'password' => 'reseller', 'role' => 'reseller'],
-        ['username' => 'endclient', 'password' => 'endclient', 'role' => 'end_client']
-    ];
+    echo "<p>ℹ️ O banco de dados está vazio. Criando tabelas...</p>";
     
-    $count = 0;
-    foreach ($users as $user) {
-        $username = $user['username'];
-        $password = password_hash($user['password'], PASSWORD_DEFAULT);
-        $role = $user['role'];
-        
-        $check = $conn->query("SELECT id FROM usuarios WHERE username = '$username'");
-        if ($check->num_rows == 0) {
-            $sql = "INSERT INTO usuarios (username, password, role) VALUES ('$username', '$password', '$role')";
-            if ($conn->query($sql) === TRUE) {
-                $count++;
+    // Sample table creation - Replace with your actual schema
+    $sql = "
+    CREATE TABLE users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(100) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        name VARCHAR(200),
+        email VARCHAR(200),
+        role ENUM('admin', 'manager', 'client', 'reseller', 'end_client') NOT NULL DEFAULT 'client',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    
+    CREATE TABLE clients (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        company_name VARCHAR(200),
+        contact_name VARCHAR(200),
+        phone VARCHAR(20),
+        email VARCHAR(200),
+        address TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    
+    CREATE TABLE trackers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        client_id INT,
+        serial_number VARCHAR(100) NOT NULL,
+        model VARCHAR(100),
+        status ENUM('active', 'inactive', 'maintenance') NOT NULL DEFAULT 'active',
+        installation_date DATE,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    
+    CREATE TABLE invoices (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        client_id INT,
+        amount DECIMAL(10,2) NOT NULL,
+        status ENUM('pending', 'paid', 'overdue', 'canceled') NOT NULL DEFAULT 'pending',
+        due_date DATE NOT NULL,
+        payment_date DATE,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ";
+    
+    // Execute multi-query SQL
+    if ($conn->multi_query($sql)) {
+        do {
+            // Store result set
+            if ($result = $conn->store_result()) {
+                $result->free();
             }
-        }
+        } while ($conn->more_results() && $conn->next_result());
+        
+        echo "<p>✅ Tabelas criadas com sucesso.</p>";
+    } else {
+        echo "<p>❌ Erro ao criar tabelas: " . $conn->error . "</p>";
     }
     
-    if ($count > 0) {
-        echo "<p>✅ Criados $count usuários de teste.</p>";
+    // Wait a moment before checking tables
+    sleep(1);
+    
+    // Reconnect to avoid issues after multiple queries
+    $conn->close();
+    $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+    
+    // Insert sample users
+    $sql = "SELECT * FROM users WHERE username = 'admin'";
+    $result = $conn->query($sql);
+    
+    if ($result->num_rows == 0) {
+        // Hash passwords
+        $admin_pass = password_hash('admin', PASSWORD_DEFAULT);
+        $manager_pass = password_hash('manager', PASSWORD_DEFAULT);
+        $client_pass = password_hash('client', PASSWORD_DEFAULT);
+        $reseller_pass = password_hash('reseller', PASSWORD_DEFAULT);
+        $end_client_pass = password_hash('endclient', PASSWORD_DEFAULT);
+        
+        // Insert users
+        $sql = "
+        INSERT INTO users (username, password, name, email, role) VALUES 
+        ('admin', '$admin_pass', 'Administrador', 'admin@tracknme.com', 'admin'),
+        ('manager', '$manager_pass', 'Gerente', 'manager@tracknme.com', 'manager'),
+        ('client', '$client_pass', 'Cliente Demo', 'client@example.com', 'client'),
+        ('reseller', '$reseller_pass', 'Revenda Demo', 'reseller@example.com', 'reseller'),
+        ('endclient', '$end_client_pass', 'Cliente Final Demo', 'endclient@example.com', 'end_client');
+        ";
+        
+        if ($conn->query($sql) === TRUE) {
+            echo "<p>✅ Usuários de teste criados com sucesso.</p>";
+        } else {
+            echo "<p>❌ Erro ao criar usuários: " . $conn->error . "</p>";
+        }
     } else {
-        echo "<p>ℹ️ Usuários de teste já existem.</p>";
+        echo "<p>ℹ️ Usuários já existem no banco de dados.</p>";
     }
 }
 
-$conn->close();
-?>
+// Create necessary directories for the API
+$apiDir = __DIR__ . '/api';
+if (!is_dir($apiDir)) {
+    if (mkdir($apiDir, 0755, true)) {
+        echo "<p>✅ Diretório API criado com sucesso.</p>";
+    } else {
+        echo "<p>❌ Erro ao criar diretório API.</p>";
+    }
+}
 
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    color: #333;
-  }
-  h1 {
-    color: #2c3e50;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
-  }
-  h2 {
-    color: #2980b9;
-  }
-  p {
-    margin-bottom: 16px;
-  }
-  a {
-    color: #3498db;
-    text-decoration: none;
-  }
-  a:hover {
-    text-decoration: underline;
-  }
-</style>
+$configDir = $apiDir . '/config';
+if (!is_dir($configDir)) {
+    if (mkdir($configDir, 0755, true)) {
+        echo "<p>✅ Diretório de configuração da API criado com sucesso.</p>";
+    } else {
+        echo "<p>❌ Erro ao criar diretório de configuração da API.</p>";
+    }
+}
+
+// Create uploads directory
+$uploadsDir = __DIR__ . '/uploads';
+if (!is_dir($uploadsDir)) {
+    if (mkdir($uploadsDir, 0755, true)) {
+        echo "<p>✅ Diretório de uploads criado com sucesso.</p>";
+    } else {
+        echo "<p>❌ Erro ao criar diretório de uploads.</p>";
+    }
+}
+
+// Create database configuration file
+$dbConfigFile = $configDir . '/database.php';
+$dbConfigContent = "<?php
+// Database Configuration
+return [
+    'host' => '$db_host',
+    'database' => '$db_name',
+    'username' => '$db_user',
+    'password' => '$db_pass',
+    'charset' => 'utf8mb4',
+    'collation' => 'utf8mb4_unicode_ci'
+];
+";
+
+if (file_put_contents($dbConfigFile, $dbConfigContent)) {
+    echo "<p>✅ Arquivo de configuração do banco de dados criado com sucesso.</p>";
+} else {
+    echo "<p>❌ Erro ao criar arquivo de configuração do banco de dados.</p>";
+}
+
+// Close database connection
+$conn->close();
+
+echo "<p>🎉 Configuração concluída! Agora você pode <a href='/system-check.php'>Verificar o sistema</a> ou <a href='/'>Ir para o aplicativo</a>.</p>";
+
+echo "<div class='warning' style='border: 1px solid #e74c3c; background: #fadbd8; padding: 10px; margin-top: 20px;'>";
+echo "<strong>IMPORTANTE:</strong> Por motivos de segurança, remova este script após a configuração inicial.";
+echo "</div>";
+
+echo "</div>";
+?>

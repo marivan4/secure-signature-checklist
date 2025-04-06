@@ -1,324 +1,225 @@
 
 <?php
-header('Content-Type: text/html; charset=utf-8');
+// System check script for Track'n'Me
+header('Content-Type: text/html; charset=UTF-8');
 
-echo "<h1>Track'n'Me - Verificação do Sistema</h1>";
+// Define required PHP extensions
+$requiredExtensions = [
+    'mysqli',
+    'pdo',
+    'pdo_mysql',
+    'json',
+    'mbstring',
+    'xml',
+    'curl'
+];
 
-// Verificar versão do PHP
+// Get application URL
+$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+$appUrl = $protocol . $_SERVER['HTTP_HOST'];
+
+// Get application directory
+$appDir = dirname(__DIR__);
+
+// Function to check if mod_rewrite is enabled
+function is_mod_rewrite_enabled() {
+    if (function_exists('apache_get_modules')) {
+        return in_array('mod_rewrite', apache_get_modules());
+    }
+    return false;
+}
+
+// HTML header
+echo "<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Track'n'Me - Verificação do Sistema</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #5D3FD3;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        h2 {
+            margin-top: 30px;
+            color: #444;
+        }
+        .success {
+            color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        .item {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Track'n'Me - Verificação do Sistema</h1>
+";
+
+// PHP version
 echo "<h2>Versão do PHP</h2>";
-echo "<p>Versão atual: " . phpversion() . "</p>";
-if (version_compare(phpversion(), '8.0.0', '>=')) {
-    echo "<p class='success'>✅ Versão do PHP compatível</p>";
-} else {
-    echo "<p class='error'>❌ PHP 8.0 ou superior requerido</p>";
-}
+$phpVersion = phpversion();
+echo "<p>Versão atual: $phpVersion</p>";
+$requiredVersion = '8.0.0';
+$versionCheck = version_compare($phpVersion, $requiredVersion, '>=');
 
-// Verificar extensões PHP
+echo "<p class='" . ($versionCheck ? 'success' : 'error') . "'>" . 
+    ($versionCheck ? '✓' : '✗') . " Versão do PHP compatível</p>";
+
+// PHP extensions
 echo "<h2>Extensões PHP</h2>";
-$required_extensions = ['mysqli', 'pdo', 'pdo_mysql', 'json', 'mbstring', 'xml', 'curl'];
-echo "<ul>";
-foreach ($required_extensions as $ext) {
-    if (extension_loaded($ext)) {
-        echo "<li class='success'>✅ $ext - Instalada</li>";
-    } else {
-        echo "<li class='error'>❌ $ext - Não instalada</li>";
-    }
-}
-echo "</ul>";
+$allExtensionsInstalled = true;
 
-// Criar diretório API se não existir
-$api_dir = __DIR__ . '/api';
-if (!file_exists($api_dir)) {
-    if (mkdir($api_dir, 0755, true)) {
-        echo "<p class='success'>✅ Diretório API criado com sucesso</p>";
-        
-        // Criar diretório config dentro da API
-        $config_dir = $api_dir . '/config';
-        if (!file_exists($config_dir)) {
-            if (mkdir($config_dir, 0755, true)) {
-                echo "<p class='success'>✅ Diretório API/config criado com sucesso</p>";
-            }
-        }
+foreach ($requiredExtensions as $ext) {
+    $installed = extension_loaded($ext);
+    echo "<div class='item'>" . 
+        ($installed ? '✓' : '✗') . " $ext - " . 
+        ($installed ? 'Instalada' : 'Não instalada') . "</div>";
+    
+    if (!$installed) {
+        $allExtensionsInstalled = false;
     }
 }
 
-// Verificar conexão com o banco de dados
+// Database connection
 echo "<h2>Conexão com o Banco de Dados</h2>";
-try {
-    // Configuração do banco de dados
-    $db_config_file = __DIR__ . '/api/config/database.php';
-    if (file_exists($db_config_file)) {
-        include $db_config_file;
-        if (class_exists('Database')) {
-            echo "<p>Usando configurações da classe Database</p>";
-            $database = new Database();
-            $conn = $database->getConnection();
-            
-            if ($conn) {
-                echo "<p class='success'>✅ Conexão com o banco de dados estabelecida</p>";
-                
-                // Verificar tabelas
-                $tables = ["usuarios", "checklists", "veiculos", "faturas", "whatsapp_config", 
-                           "system_config", "sim_cards", "operators", "scheduling", "scheduling_config", 
-                           "revendas", "reseller_clients", "asaas_config"];
-                echo "<h3>Tabelas do Banco de Dados</h3>";
-                echo "<ul>";
-                foreach ($tables as $table) {
-                    if ($database->tableExists($table)) {
-                        $stmt = $conn->query("SELECT COUNT(*) as count FROM $table");
-                        $count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-                        echo "<li class='success'>✅ Tabela '$table' - $count registros</li>";
-                    } else {
-                        echo "<li class='error'>❌ Tabela '$table' não encontrada</li>";
-                    }
-                }
-                echo "</ul>";
-            } else {
-                throw new Exception("Não foi possível obter conexão com o banco de dados");
-            }
+$dbConfigFile = __DIR__ . '/api/config/database.php';
+
+if (file_exists($dbConfigFile)) {
+    try {
+        $dbConfig = include($dbConfigFile);
+        $mysqli = new mysqli(
+            $dbConfig['host'],
+            $dbConfig['username'],
+            $dbConfig['password'],
+            $dbConfig['database']
+        );
+
+        if ($mysqli->connect_error) {
+            echo "<p class='error'>✗ " . $mysqli->connect_error . "</p>";
+            $dbConnected = false;
         } else {
-            throw new Exception("A classe Database não foi encontrada no arquivo de configuração");
+            echo "<p class='success'>✓ Conexão com o banco de dados estabelecida</p>";
+            $dbConnected = true;
+            $mysqli->close();
         }
-    } else {
-        // Se o arquivo não existe, vamos criar um modelo básico
-        $db_dir = dirname($db_config_file);
-        if (!file_exists($db_dir)) {
-            mkdir($db_dir, 0755, true);
-        }
-        
-        $db_template = '<?php
-class Database {
-    // Credenciais do banco de dados
-    private $host = "localhost";
-    private $db_name = "checklist_manager";
-    private $username = "checklist_user";
-    private $password = "sua_senha_segura";
-    public $conn;
+    } catch (Exception $e) {
+        echo "<p class='error'>✗ " . $e->getMessage() . "</p>";
+        $dbConnected = false;
+    }
+} else {
+    echo "<p class='error'>✗ Arquivo de configuração do banco de dados não encontrado</p>";
+    $dbConnected = false;
+}
 
-    // Conectar ao banco de dados
-    public function getConnection() {
-        $this->conn = null;
+// Directory permissions
+echo "<h2>Permissões de Diretórios</h2>";
+$appDir = __DIR__;
+$appDirPerms = substr(sprintf('%o', fileperms($appDir)), -4);
+echo "<p>Diretório da aplicação: $appDir<br>Permissões: $appDirPerms</p>";
 
-        try {
-            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
-            $this->conn->exec("set names utf8");
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $this->conn;
-        } catch(PDOException $exception) {
-            echo "Erro de conexão: " . $exception->getMessage();
-            return null;
+$appDirWritable = is_writable($appDir);
+echo "<p class='" . ($appDirWritable ? 'success' : 'error') . "'>" . 
+    ($appDirWritable ? '✓' : '✗') . " Diretório da aplicação é gravável</p>";
+
+// Check if API directory exists
+$apiDir = $appDir . '/api';
+$apiDirExists = is_dir($apiDir);
+echo "<p class='" . ($apiDirExists ? 'success' : 'error') . "'>" . 
+    ($apiDirExists ? '✓' : '✗') . " Diretório API existe</p>";
+
+// If API directory doesn't exist, create it
+if (!$apiDirExists) {
+    if (mkdir($apiDir, 0755, true)) {
+        echo "<p class='success'>✓ Diretório API criado</p>";
+        $apiDirExists = true;
+    }
+}
+
+// Check if config directory exists within API
+if ($apiDirExists) {
+    $configDir = $apiDir . '/config';
+    if (!is_dir($configDir)) {
+        if (mkdir($configDir, 0755, true)) {
+            echo "<p class='success'>✓ Diretório de configuração criado</p>";
         }
     }
     
-    // Verificar se uma tabela existe
-    public function tableExists($tableName) {
-        try {
-            $result = $this->conn->query("SHOW TABLES LIKE \'{$tableName}\'");
-            return $result->rowCount() > 0;
-        } catch(PDOException $exception) {
-            echo "Erro ao verificar tabela: " . $exception->getMessage();
-            return false;
+    // Create basic database configuration if it doesn't exist
+    if (!file_exists($dbConfigFile)) {
+        $dbConfigContent = "<?php
+// Database Configuration
+return [
+    'host' => 'localhost',
+    'database' => 'checklist_manager',
+    'username' => 'checklist_user',
+    'password' => 'secure_password_123',
+    'charset' => 'utf8mb4',
+    'collation' => 'utf8mb4_unicode_ci'
+];
+";
+        if (file_put_contents($dbConfigFile, $dbConfigContent)) {
+            echo "<p class='success'>✓ Arquivo de configuração básico criado</p>";
         }
     }
 }
-?>';
-        file_put_contents($db_config_file, $db_template);
-        echo "<p class='notice'>ℹ️ Arquivo de configuração database.php criado com modelo padrão. Edite-o para configurar suas credenciais.</p>";
-        throw new Exception("Arquivo de configuração database.php não encontrado. Um modelo foi criado para você.");
-    }
-} catch (Exception $e) {
-    echo "<p class='error'>❌ " . $e->getMessage() . "</p>";
-}
 
-// Verificar permissões de diretórios
-echo "<h2>Permissões de Diretórios</h2>";
-$app_dir = __DIR__;
-$api_dir = __DIR__ . '/api';
-$upload_dir = __DIR__ . '/uploads';
+// Check if uploads directory exists
+$uploadsDir = $appDir . '/uploads';
+$uploadsDirExists = is_dir($uploadsDir);
 
-echo "<ul>";
-echo "<li>Diretório da aplicação: $app_dir</li>";
-echo "<li>Permissões: " . substr(sprintf('%o', fileperms($app_dir)), -4) . "</li>";
-
-if (is_writable($app_dir)) {
-    echo "<li class='success'>✅ Diretório da aplicação é gravável</li>";
-} else {
-    echo "<li class='error'>❌ Diretório da aplicação não é gravável</li>";
-}
-
-if (file_exists($api_dir)) {
-    echo "<li class='success'>✅ Diretório API existe</li>";
-    if (is_writable($api_dir)) {
-        echo "<li class='success'>✅ Diretório API é gravável</li>";
-    } else {
-        echo "<li class='error'>❌ Diretório API não é gravável</li>";
+if (!$uploadsDirExists) {
+    if (mkdir($uploadsDir, 0755, true)) {
+        echo "<p class='success'>✓ Diretório de uploads criado</p>";
     }
 } else {
-    echo "<li class='error'>❌ Diretório API não existe</li>";
+    echo "<p class='success'>✓ Diretório de uploads existe</p>";
 }
 
-if (!file_exists($upload_dir)) {
-    if (mkdir($upload_dir, 0755, true)) {
-        echo "<li class='success'>✅ Diretório de uploads criado</li>";
-    } else {
-        echo "<li class='error'>❌ Não foi possível criar o diretório de uploads</li>";
-    }
-} else {
-    echo "<li class='success'>✅ Diretório de uploads existe</li>";
-    if (is_writable($upload_dir)) {
-        echo "<li class='success'>✅ Diretório de uploads é gravável</li>";
-    } else {
-        echo "<li class='error'>❌ Diretório de uploads não é gravável</li>";
-    }
-}
-echo "</ul>";
-
-// Verificar configuração do servidor
+// Server configuration
 echo "<h2>Configuração do Servidor</h2>";
-echo "<ul>";
-echo "<li>Servidor: " . $_SERVER['SERVER_SOFTWARE'] . "</li>";
-echo "<li>Sistema Operacional: " . PHP_OS . "</li>";
-echo "<li>Limite de Memória PHP: " . ini_get('memory_limit') . "</li>";
-echo "<li>Tempo Máximo de Execução: " . ini_get('max_execution_time') . " segundos</li>";
-echo "<li>Tamanho Máximo de Upload: " . ini_get('upload_max_filesize') . "</li>";
-echo "<li>Tamanho Máximo de POST: " . ini_get('post_max_size') . "</li>";
-echo "</ul>";
+echo "<p>Servidor: " . $_SERVER['SERVER_SOFTWARE'] . "</p>";
+echo "<p>Sistema Operacional: " . PHP_OS . "</p>";
+echo "<p>Limite de Memória PHP: " . ini_get('memory_limit') . "</p>";
+echo "<p>Tempo Máximo de Execução: " . ini_get('max_execution_time') . " segundos</p>";
+echo "<p>Tamanho Máximo de Upload: " . ini_get('upload_max_filesize') . "</p>";
+echo "<p>Tamanho Máximo de POST: " . ini_get('post_max_size') . "</p>";
 
-// Verificar mod_rewrite
+// Check mod_rewrite
 echo "<h2>Mod Rewrite</h2>";
-if (function_exists('apache_get_modules')) {
-    $modules = apache_get_modules();
-    if (in_array('mod_rewrite', $modules)) {
-        echo "<p class='success'>✅ mod_rewrite está ativado</p>";
-    } else {
-        echo "<p class='error'>❌ mod_rewrite não está ativado</p>";
-    }
-} else {
-    echo "<p class='notice'>ℹ️ Não foi possível verificar mod_rewrite. Se estiver usando PHP-FPM, isso é normal.</p>";
-}
+$modRewriteEnabled = is_mod_rewrite_enabled();
+echo "<p class='" . ($modRewriteEnabled ? 'success' : 'error') . "'>" . 
+    ($modRewriteEnabled ? '✓' : '✗') . " mod_rewrite está " . 
+    ($modRewriteEnabled ? 'ativado' : 'desativado') . "</p>";
 
-// Verificar URL da aplicação
+// Application URL
 echo "<h2>URL da Aplicação</h2>";
-$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-$host = $_SERVER['HTTP_HOST'];
-$uri = rtrim(dirname($_SERVER['PHP_SELF']), '/');
-$app_url = "$protocol://$host$uri";
-echo "<p>URL da aplicação: $app_url</p>";
+echo "<p>URL da aplicação: $appUrl</p>";
 
-// Verificar arquivo .env
-echo "<h2>Arquivo de Configuração .env</h2>";
-$env_file = dirname(__DIR__) . '/.env';
-if (file_exists($env_file)) {
-    echo "<p class='success'>✅ Arquivo .env encontrado</p>";
-    if (is_readable($env_file)) {
-        echo "<p class='success'>✅ Arquivo .env pode ser lido</p>";
-        $env_content = file_get_contents($env_file);
-        $env_vars = [
-            'VITE_API_BASE_URL',
-            'VITE_ASAAS_API_URL',
-            'VITE_ASAAS_API_KEY',
-            'VITE_WHATSAPP_API_URL',
-            'VITE_WHATSAPP_API_TOKEN'
-        ];
-        echo "<p>Verificando variáveis de ambiente:</p>";
-        echo "<ul>";
-        foreach ($env_vars as $var) {
-            if (preg_match("/$var=/", $env_content)) {
-                echo "<li class='success'>✅ $var - Configurado</li>";
-            } else {
-                echo "<li class='error'>❌ $var - Não configurado</li>";
-            }
-        }
-        echo "</ul>";
-    } else {
-        echo "<p class='error'>❌ Arquivo .env não pode ser lido</p>";
-    }
-} else {
-    echo "<p class='error'>❌ Arquivo .env não encontrado</p>";
-    echo "<p>Crie um arquivo .env na raiz do projeto com as seguintes variáveis:</p>";
-    echo "<pre>
-VITE_API_BASE_URL=http://seu-dominio.com/api
-VITE_ASAAS_API_URL=https://sandbox.asaas.com/api/v3
-VITE_ASAAS_API_KEY=sua_api_key_do_asaas
-VITE_WHATSAPP_API_URL=https://api.whatsapp.com
-VITE_WHATSAPP_API_TOKEN=seu_token_whatsapp
-</pre>";
-}
-
-echo "<h2>Resumo</h2>";
-echo "<div class='summary'>";
-echo "<p>Se todos os itens estão marcados com ✅, seu sistema está configurado corretamente.</p>";
-echo "<p>Para itens marcados com ❌, siga as instruções no Manual de Instalação para resolver os problemas.</p>";
-echo "</div>";
-
+// Final summary and next steps
 echo "<h2>Próximos Passos</h2>";
 echo "<ol>";
 echo "<li>Se todos os requisitos estiverem atendidos, remova este arquivo de verificação.</li>";
-echo "<li>Verifique se a aplicação está funcionando corretamente em <a href='$app_url'>$app_url</a>.</li>";
+echo "<li>Verifique se a aplicação está funcionando corretamente em $appUrl.</li>";
 echo "<li>Configure backups regulares do banco de dados.</li>";
 echo "<li>Altere a senha do usuário admin após o primeiro login.</li>";
 echo "</ol>";
 
-echo "<p><a href='$app_url' class='button'>Ir para a aplicação</a></p>";
-?>
+echo "<p><a href='/' style='display: inline-block; padding: 10px 20px; background: #5D3FD3; color: white; text-decoration: none; border-radius: 4px;'>Ir para a aplicação</a></p>";
 
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
-    color: #333;
-  }
-  h1 {
-    color: #2c3e50;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
-  }
-  h2 {
-    color: #2980b9;
-    margin-top: 25px;
-    border-left: 5px solid #3498db;
-    padding-left: 10px;
-  }
-  p, li {
-    margin-bottom: 10px;
-  }
-  ul {
-    padding-left: 20px;
-  }
-  .success {
-    color: #27ae60;
-  }
-  .error {
-    color: #e74c3c;
-  }
-  .notice {
-    color: #f39c12;
-  }
-  pre {
-    background-color: #f8f9fa;
-    padding: 10px;
-    border-radius: 4px;
-    overflow-x: auto;
-  }
-  .summary {
-    background-color: #eaf2f8;
-    padding: 15px;
-    border-radius: 5px;
-    margin: 20px 0;
-  }
-  .button {
-    display: inline-block;
-    background-color: #3498db;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 4px;
-    margin-top: 20px;
-  }
-  .button:hover {
-    background-color: #2980b9;
-  }
-</style>
+// Close HTML
+echo "</body></html>";
+?>

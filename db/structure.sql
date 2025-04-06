@@ -1,257 +1,187 @@
 
--- Database structure for Track'n'Me System
--- Updated on 2025-04-05
+-- Track'n'Me Database Structure
+-- Version: 1.0
+-- Date: 2023-07-01
 
--- Drop tables if they exist (in reverse order of dependencies)
-SET FOREIGN_KEY_CHECKS = 0;
+-- Enable strict mode
+SET sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION';
+
+-- Create tables
 
 -- Users table
-CREATE TABLE IF NOT EXISTS usuarios (
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    name VARCHAR(255),
-    email VARCHAR(255),
-    phone VARCHAR(20),
-    address VARCHAR(255),
-    city VARCHAR(255),
-    state VARCHAR(2),
-    zip_code VARCHAR(10),
+    name VARCHAR(200),
+    email VARCHAR(200),
     role ENUM('admin', 'manager', 'client', 'reseller', 'end_client') NOT NULL DEFAULT 'client',
-    parent_id INT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (parent_id) REFERENCES usuarios(id) ON DELETE SET NULL
-);
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Checklists table
-CREATE TABLE IF NOT EXISTS checklists (
+-- Clients table
+CREATE TABLE IF NOT EXISTS clients (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    reseller_id INT NULL,
-    cpf_cnpj VARCHAR(20) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    address VARCHAR(255),
-    address_number VARCHAR(50),
-    neighborhood VARCHAR(255),
-    city VARCHAR(255),
-    state VARCHAR(2),
-    zip_code VARCHAR(10),
+    user_id INT,
+    company_name VARCHAR(200),
+    contact_name VARCHAR(200),
     phone VARCHAR(20),
-    email VARCHAR(255) NOT NULL,
-    vehicle_model VARCHAR(255),
-    license_plate VARCHAR(20),
-    tracker_model VARCHAR(100),
-    tracker_imei VARCHAR(50),
-    registration_date DATE,
-    installation_location VARCHAR(255),
-    status ENUM('pending', 'signed', 'completed') NOT NULL DEFAULT 'pending',
-    ip_address VARCHAR(45),
-    signature_data TEXT,
-    signed_at DATETIME,
+    email VARCHAR(200),
+    document_type ENUM('cpf', 'cnpj') NOT NULL DEFAULT 'cpf',
+    document_number VARCHAR(20),
+    address VARCHAR(255),
+    city VARCHAR(100),
+    state VARCHAR(2),
+    postal_code VARCHAR(10),
+    reseller_id INT,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES usuarios(id),
-    FOREIGN KEY (reseller_id) REFERENCES usuarios(id)
-);
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (reseller_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Vehicles table
-CREATE TABLE IF NOT EXISTS veiculos (
+CREATE TABLE IF NOT EXISTS vehicles (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    chassis VARCHAR(17),
-    linha VARCHAR(50),
-    modelo VARCHAR(50),
-    data_fabricacao DATE,
-    ultima_inspecao DATETIME,
-    cliente_id INT,
-    reseller_id INT NULL,
-    FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
-    FOREIGN KEY (reseller_id) REFERENCES usuarios(id)
-);
+    client_id INT NOT NULL,
+    make VARCHAR(100),
+    model VARCHAR(100),
+    year INT,
+    color VARCHAR(50),
+    license_plate VARCHAR(20),
+    chassis_number VARCHAR(50),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Trackers table
+CREATE TABLE IF NOT EXISTS trackers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    serial_number VARCHAR(100) NOT NULL UNIQUE,
+    imei VARCHAR(20),
+    model VARCHAR(100),
+    status ENUM('active', 'inactive', 'maintenance', 'stock') NOT NULL DEFAULT 'stock',
+    vehicle_id INT,
+    client_id INT,
+    installation_date DATE,
+    next_maintenance DATE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Plans table
+CREATE TABLE IF NOT EXISTS plans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    frequency ENUM('monthly', 'quarterly', 'semiannual', 'annual') NOT NULL DEFAULT 'monthly',
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Subscriptions table
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    plan_id INT NOT NULL,
+    vehicle_id INT,
+    tracker_id INT,
+    status ENUM('active', 'canceled', 'suspended', 'expired') NOT NULL DEFAULT 'active',
+    start_date DATE NOT NULL,
+    end_date DATE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (plan_id) REFERENCES plans(id) ON DELETE CASCADE,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL,
+    FOREIGN KEY (tracker_id) REFERENCES trackers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Invoices table
-CREATE TABLE IF NOT EXISTS faturas (
+CREATE TABLE IF NOT EXISTS invoices (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    reseller_id INT NULL,
-    checklist_id INT,
-    invoice_number VARCHAR(50) NOT NULL,
-    description TEXT NOT NULL,
+    client_id INT NOT NULL,
+    subscription_id INT,
     amount DECIMAL(10,2) NOT NULL,
-    status ENUM('pending', 'paid', 'cancelled') NOT NULL DEFAULT 'pending',
+    status ENUM('pending', 'paid', 'overdue', 'canceled', 'refunded') NOT NULL DEFAULT 'pending',
+    issue_date DATE NOT NULL,
     due_date DATE NOT NULL,
-    paid_date DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    email VARCHAR(100),
-    phone VARCHAR(20),
-    billing_type ENUM('BOLETO', 'PIX', 'CREDIT_CARD') DEFAULT 'BOLETO',
-    asaas_id VARCHAR(100),
-    FOREIGN KEY (user_id) REFERENCES usuarios(id),
-    FOREIGN KEY (reseller_id) REFERENCES usuarios(id),
-    FOREIGN KEY (checklist_id) REFERENCES checklists(id) ON DELETE SET NULL
-);
-
--- WhatsApp configuration table
-CREATE TABLE IF NOT EXISTS whatsapp_config (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    api_key VARCHAR(255) NOT NULL,
-    instance VARCHAR(100) NOT NULL DEFAULT 'default',
-    base_url VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES usuarios(id)
-);
-
--- System configuration table
-CREATE TABLE IF NOT EXISTS system_config (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    config_key VARCHAR(100) NOT NULL UNIQUE,
-    config_value TEXT NOT NULL,
+    payment_date DATE,
+    payment_method VARCHAR(100),
+    transaction_id VARCHAR(100),
     description TEXT,
+    notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Resellers table
-CREATE TABLE IF NOT EXISTS revendas (
+CREATE TABLE IF NOT EXISTS resellers (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    logo VARCHAR(255),
-    address VARCHAR(255),
-    city VARCHAR(255),
-    state VARCHAR(2),
-    zip_code VARCHAR(10),
-    email VARCHAR(255),
+    user_id INT NOT NULL UNIQUE,
+    company_name VARCHAR(200) NOT NULL,
+    contact_name VARCHAR(200),
     phone VARCHAR(20),
-    contact_name VARCHAR(255),
-    contact_phone VARCHAR(20),
-    description TEXT,
-    status ENUM('active', 'pending', 'inactive') NOT NULL DEFAULT 'pending',
-    clients_count INT DEFAULT 0,
-    monthly_revenue DECIMAL(10,2) DEFAULT 0,
-    since DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by INT NOT NULL,
-    asaas_configured BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (user_id) REFERENCES usuarios(id),
-    FOREIGN KEY (created_by) REFERENCES usuarios(id)
-);
-
--- Reseller clients table
-CREATE TABLE IF NOT EXISTS reseller_clients (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    reseller_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(20),
-    cpf_cnpj VARCHAR(20) NOT NULL,
+    email VARCHAR(200),
+    document_type ENUM('cpf', 'cnpj') NOT NULL DEFAULT 'cnpj',
+    document_number VARCHAR(20),
     address VARCHAR(255),
-    city VARCHAR(255),
+    city VARCHAR(100),
     state VARCHAR(2),
-    zip_code VARCHAR(10),
-    status ENUM('active', 'inactive', 'pending') NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (reseller_id) REFERENCES revendas(id)
-);
-
--- Asaas configuration table
-CREATE TABLE IF NOT EXISTS asaas_config (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    api_key VARCHAR(255) NOT NULL,
-    sandbox BOOLEAN NOT NULL DEFAULT 1,
-    user_role VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES usuarios(id)
-);
-
--- SIM cards table
-CREATE TABLE IF NOT EXISTS sim_cards (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    iccid VARCHAR(50) NOT NULL UNIQUE,
-    phone_number VARCHAR(20),
-    operator VARCHAR(50) NOT NULL,
-    plan VARCHAR(100),
-    status ENUM('active', 'inactive', 'suspended') NOT NULL DEFAULT 'inactive',
-    activation_date DATE,
-    expiration_date DATE,
-    client_id INT,
-    tracker_id INT,
-    monthly_fee DECIMAL(10,2),
-    notes TEXT,
+    postal_code VARCHAR(10),
+    commission_rate DECIMAL(5,2) DEFAULT 0.00,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (client_id) REFERENCES usuarios(id)
-);
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Operators table
-CREATE TABLE IF NOT EXISTS operators (
+-- Integrations table
+CREATE TABLE IF NOT EXISTS integrations (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
+    user_id INT NOT NULL,
+    provider ENUM('asaas', 'whatsapp', 'gps') NOT NULL,
     api_key VARCHAR(255),
-    api_url VARCHAR(255),
-    contact_name VARCHAR(100),
-    contact_email VARCHAR(100),
-    contact_phone VARCHAR(20),
-    notes TEXT,
-    active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Scheduling table
-CREATE TABLE IF NOT EXISTS scheduling (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    client_id INT,
-    client_name VARCHAR(255) NOT NULL,
-    client_email VARCHAR(255) NOT NULL,
-    client_phone VARCHAR(20) NOT NULL,
-    service_type VARCHAR(100) NOT NULL,
-    appointment_date DATETIME NOT NULL,
-    vehicle_info TEXT,
-    status ENUM('pending', 'confirmed', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
-    technician_id INT,
-    notes TEXT,
+    api_secret VARCHAR(255),
+    api_token VARCHAR(255),
+    sandbox BOOLEAN NOT NULL DEFAULT TRUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (client_id) REFERENCES usuarios(id),
-    FOREIGN KEY (technician_id) REFERENCES usuarios(id)
-);
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Scheduling configuration table
-CREATE TABLE IF NOT EXISTS scheduling_config (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    service_type VARCHAR(100) NOT NULL,
-    duration_minutes INT NOT NULL DEFAULT 60,
-    available_days VARCHAR(20) DEFAULT '1,2,3,4,5', -- days of week available
-    start_time TIME DEFAULT '09:00:00',
-    end_time TIME DEFAULT '18:00:00',
-    max_daily_appointments INT DEFAULT 10,
-    active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+-- Insert default admin user if not exists
+INSERT INTO users (username, password, name, email, role) 
+SELECT 'admin', '$2y$10$W.7zPIEPINLm5Zftz5CldugsOrNVLxK3.2ep7/HsT9wgr3yJMnKfu', 'Administrador', 'admin@tracknme.com', 'admin'
+FROM dual
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin');
 
--- Insert default admin user
-INSERT INTO usuarios (username, password, role)
-SELECT 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'
-WHERE NOT EXISTS (SELECT 1 FROM usuarios WHERE username = 'admin');
+-- Insert default plans if not exist
+INSERT INTO plans (name, description, price, frequency, active) 
+SELECT 'Básico', 'Rastreamento básico com atualizações a cada 5 minutos', 49.90, 'monthly', 1
+FROM dual
+WHERE NOT EXISTS (SELECT 1 FROM plans WHERE name = 'Básico');
 
--- Insert example operators
-INSERT INTO operators (name, api_url, active)
-VALUES 
-  ('Vivo', 'https://api.vivo.com.br', 1),
-  ('Claro', 'https://api.claro.com.br', 1),
-  ('TIM', 'https://api.tim.com.br', 1),
-  ('Oi', 'https://api.oi.com.br', 1),
-  ('Linkfields', 'https://api.linkfields.com', 1),
-  ('Arqia', 'https://api.arqia.com.br', 1),
-  ('Transmeet', 'https://api.transmeet.com', 1),
-  ('Hinova', 'https://api.hinova.com.br', 1)
-ON DUPLICATE KEY UPDATE name = VALUES(name);
+INSERT INTO plans (name, description, price, frequency, active) 
+SELECT 'Premium', 'Rastreamento em tempo real com histórico de 6 meses', 79.90, 'monthly', 1
+FROM dual
+WHERE NOT EXISTS (SELECT 1 FROM plans WHERE name = 'Premium');
 
--- Insert WhatsApp global API key
-INSERT INTO system_config (config_key, config_value, description)
-VALUES ('whatsapp_global_api_key', 'd9919cda7e370839d33b8946584dac93', 'Chave global da API do WhatsApp')
-ON DUPLICATE KEY UPDATE config_value = VALUES(config_value);
-
-SET FOREIGN_KEY_CHECKS = 1;
+INSERT INTO plans (name, description, price, frequency, active) 
+SELECT 'Empresarial', 'Rastreamento em tempo real com relatórios e API', 129.90, 'monthly', 1
+FROM dual
+WHERE NOT EXISTS (SELECT 1 FROM plans WHERE name = 'Empresarial');

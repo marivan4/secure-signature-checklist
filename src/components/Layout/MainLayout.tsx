@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,9 +33,10 @@ interface SidebarItemProps {
   href: string;
   active?: boolean;
   roles?: string[];
+  onClick?: () => void;
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, href, active, roles }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, href, active, roles, onClick }) => {
   const { user } = useAuth();
   
   // Check if the current user role is allowed to see this item
@@ -49,6 +51,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, href, acti
         "flex items-center gap-3 px-3 py-2 rounded-md text-white transition-colors hover:bg-white/10",
         active && "bg-white/10 font-medium"
       )}
+      onClick={onClick}
     >
       <Icon className="h-5 w-5" />
       <span>{label}</span>
@@ -60,6 +63,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const isSignaturePage = location.pathname.includes('/signature/');
   const currentPath = location.pathname;
@@ -73,6 +77,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       navigate('/login');
     }
   }, [logout, navigate]);
+  
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
 
   // Don't show sidebar/header/footer on signature page for a cleaner experience
   if (isSignaturePage) {
@@ -166,6 +175,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       roles: ['client', 'end_client'] 
     },
   ];
+
+  // For reseller, add special link to reseller dashboard
+  if (user?.role === 'reseller') {
+    navigationItems.unshift({
+      icon: Store,
+      label: "Portal da Revenda",
+      href: "/reseller-dashboard",
+      active: currentPath.startsWith('/reseller-dashboard'),
+      roles: ['reseller']
+    });
+  }
 
   return (
     <div className="flex min-h-screen flex-col">

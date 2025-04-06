@@ -1,7 +1,7 @@
 
-# Manual de Instalação - Sistema de Gestão de Rastreadores
+# Manual de Instalação - Track'n'Me
 
-Este documento contém instruções detalhadas para a instalação e configuração do sistema.
+Este documento contém instruções detalhadas para a instalação e configuração do sistema Track'n'Me.
 
 ## Requisitos do Sistema
 
@@ -16,8 +16,8 @@ Este documento contém instruções detalhadas para a instalação e configuraç
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd seu-repositorio
+git clone https://github.com/seu-usuario/track-n-me.git
+cd track-n-me
 ```
 
 ### 2. Instalação das dependências front-end
@@ -42,64 +42,42 @@ VITE_WHATSAPP_API_URL=https://api.whatsapp.com
 VITE_WHATSAPP_API_TOKEN=seu_token_whatsapp
 ```
 
-### 4. Configuração do banco de dados
+### 4. Construção do front-end
 
-1. Certifique-se de que o MySQL esteja instalado e em execução
-2. Crie o diretório `db` na raiz do projeto caso não exista
-3. Copie o arquivo `structure.sql` para o diretório `db`
-4. Execute o script de configuração do banco de dados acessando:
-   ```
-   http://seu-dominio.com/db_setup.php
-   ```
-   
-   Este script irá:
-   - Criar o banco de dados caso não exista
-   - Criar o usuário `checklist_user` com as permissões necessárias
-   - Importar a estrutura do banco de dados
-   - Criar os usuários de teste
-   - Configurar os diretórios necessários para a API
+```bash
+# Para desenvolvimento
+npm run dev
 
-5. Após a conclusão, remova o arquivo `db_setup.php` por segurança:
-   ```bash
-   rm public/db_setup.php
-   ```
+# Para produção
+npm run build
+```
 
-### 5. Verifique a configuração do sistema
-
-Acesse `http://seu-dominio.com/system-check.php` para verificar se tudo está configurado corretamente.
-
-Este script irá verificar:
-- Versão do PHP
-- Extensões PHP necessárias
-- Conexão com o banco de dados
-- Estrutura das tabelas
-- Permissões de diretórios
-- Configuração do servidor web
-
-### 6. Configuração do servidor web
+### 5. Configuração do servidor web
 
 #### Para Apache:
+
 Certifique-se que o arquivo `.htaccess` está na pasta `public/` com o seguinte conteúdo:
 
 ```apache
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /index.html [L]
-</IfModule>
+# Enable rewrite engine
+RewriteEngine On
 
-# PHP API redirects
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteRule ^api/(.*)$ api/$1 [L]
-</IfModule>
+# If the request is for an actual file or directory, serve it directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# If the request is for a PHP file in the API directory, serve it directly
+RewriteRule ^api/.*\.php$ - [L]
+
+# If the request begins with /api/, serve files in the API directory
+RewriteRule ^api/ - [L]
+
+# Otherwise, redirect all requests to index.html
+RewriteRule ^ index.html [L]
 ```
 
 #### Para Nginx:
-Adicione a seguinte configuração ao seu arquivo de site:
 
 ```nginx
 server {
@@ -124,37 +102,74 @@ server {
 }
 ```
 
-### 7. Compilação do front-end
+### 6. Configuração do banco de dados
 
-```bash
-# Para ambiente de desenvolvimento
-npm run dev
+1. Certifique-se de que o MySQL esteja instalado e em execução
+2. Acesse o MySQL e execute os seguintes comandos:
 
-# Para ambiente de produção
-npm run build
+```sql
+CREATE DATABASE checklist_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'checklist_user'@'localhost' IDENTIFIED BY 'sua_senha_segura';
+GRANT ALL PRIVILEGES ON checklist_manager.* TO 'checklist_user'@'localhost';
+FLUSH PRIVILEGES;
 ```
 
-### 8. Testando a instalação
+3. Importe a estrutura do banco de dados:
 
-1. Acesse o front-end em `http://seu-dominio.com`
-2. Teste a API acessando `http://seu-dominio.com/api/test-connection.php`
-3. Verifique a configuração do sistema em `http://seu-dominio.com/system-check.php`
+```bash
+mysql -u checklist_user -p'sua_senha_segura' checklist_manager < db/structure.sql
+```
 
-### 9. Credenciais padrão
+Alternativamente, acesse o instalador web em:
 
-O sistema é instalado com os seguintes usuários padrão:
+```
+http://seu-dominio.com/db_setup.php
+```
 
-| Usuário     | Senha       | Função       |
-|-------------|-------------|--------------|
-| admin       | admin       | Administrador|
-| manager     | manager     | Gerente      |
-| client      | client      | Cliente      |
-| reseller    | reseller    | Revendedor   |
-| endclient   | endclient   | Cliente Final|
+### 7. Configuração da API
 
-**IMPORTANTE:** Altere estas senhas após o primeiro login!
+1. Crie o diretório da API e configuração do banco de dados:
 
-### 10. Permissões de diretórios
+```bash
+mkdir -p public/api/config
+mkdir -p public/uploads
+chmod -R 775 public/uploads
+```
+
+2. Crie o arquivo de configuração do banco de dados:
+
+```bash
+nano public/api/config/database.php
+```
+
+Adicione o seguinte conteúdo:
+
+```php
+<?php
+// Database Configuration
+return [
+    'host' => 'localhost',
+    'database' => 'checklist_manager',
+    'username' => 'checklist_user',
+    'password' => 'sua_senha_segura',
+    'charset' => 'utf8mb4',
+    'collation' => 'utf8mb4_unicode_ci'
+];
+```
+
+### 8. Verificação do sistema
+
+Acesse `http://seu-dominio.com/system-check.php` para verificar se tudo está configurado corretamente.
+
+Este script irá verificar:
+- Versão do PHP
+- Extensões PHP necessárias
+- Conexão com o banco de dados
+- Estrutura das tabelas
+- Permissões de diretórios
+- Configuração do servidor web
+
+### 9. Permissões de diretórios
 
 Certifique-se de que os diretórios do sistema possuam as permissões corretas:
 
@@ -170,29 +185,32 @@ find /caminho/para/o/projeto -type d -exec chmod 755 {} \;
 chmod -R 775 /caminho/para/o/projeto/public/uploads
 ```
 
-### 11. Configurações adicionais
+### 10. Credenciais padrão
 
-#### Integração com Asaas
+O sistema é instalado com os seguintes usuários padrão:
+
+| Usuário     | Senha       | Função       |
+|-------------|-------------|--------------|
+| admin       | admin       | Administrador|
+| manager     | manager     | Gerente      |
+| client      | client      | Cliente      |
+| reseller    | reseller    | Revendedor   |
+| endclient   | endclient   | Cliente Final|
+
+**IMPORTANTE:** Altere estas senhas após o primeiro login!
+
+## Configurações adicionais
+
+### Integração com Asaas
 
 1. Crie uma conta na plataforma Asaas (https://www.asaas.com)
 2. Obtenha sua chave de API no painel Asaas
 3. Configure a chave na página de Integrações do sistema
 
-#### Integração com WhatsApp
+### Integração com WhatsApp
 
 1. Obtenha credenciais da API do WhatsApp Business
 2. Configure as credenciais na página de Integrações do sistema
-
-## Atualizações do sistema
-
-Para atualizar o sistema para uma nova versão:
-
-1. Faça backup do banco de dados
-2. Faça backup dos arquivos de configuração
-3. Atualize o repositório com `git pull`
-4. Atualize as dependências com `npm install`
-5. Recompile o front-end com `npm run build`
-6. Execute as migrações do banco de dados se necessário
 
 ## Resolução de problemas comuns
 
@@ -203,17 +221,10 @@ Para atualizar o sistema para uma nova versão:
   ```sql
   SELECT user FROM mysql.user WHERE user = 'checklist_user';
   ```
-- Para recriar o usuário e conceder permissões:
-  ```sql
-  CREATE USER 'checklist_user'@'localhost' IDENTIFIED BY 'sua_senha_segura';
-  GRANT ALL PRIVILEGES ON checklist_manager.* TO 'checklist_user'@'localhost';
-  FLUSH PRIVILEGES;
-  ```
 
-### Problema: Rotas não funcionam após recarregar a página
+### Problema: Páginas não carregam corretamente
 - Verifique se o arquivo `.htaccess` está configurado corretamente
-- Certifique-se que o mod_rewrite está habilitado no Apache
-- Para habilitar o mod_rewrite no Apache:
+- Certifique-se que o mod_rewrite está habilitado no Apache:
   ```bash
   sudo a2enmod rewrite
   sudo systemctl restart apache2
@@ -226,4 +237,5 @@ Para atualizar o sistema para uma nova versão:
 
 ## Suporte e contato
 
-Para obter suporte, entre em contato através do email suporte@exemplo.com ou pelo telefone (11) 9999-9999.
+Para obter suporte, entre em contato através do email suporte@narrota.com.br
+

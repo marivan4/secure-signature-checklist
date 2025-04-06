@@ -87,6 +87,8 @@ scp -r * usuario@app8.narrota.com.br:/var/www/html/fatura/
 
 # Configurar permissões
 ssh usuario@app8.narrota.com.br 'sudo chown -R www-data:www-data /var/www/html/fatura'
+ssh usuario@app8.narrota.com.br 'sudo find /var/www/html/fatura -type d -exec chmod 755 {} \;'
+ssh usuario@app8.narrota.com.br 'sudo find /var/www/html/fatura -type f -exec chmod 644 {} \;'
 ```
 
 ### Passo 5: Configurar o certificado SSL
@@ -97,6 +99,9 @@ sudo apt install -y certbot python3-certbot-apache
 
 # Obter certificado SSL
 sudo certbot --apache -d app8.narrota.com.br
+
+# Verificar renovação automática
+sudo certbot renew --dry-run
 ```
 
 ### Passo 6: Configurar o banco de dados
@@ -130,6 +135,49 @@ ssh usuario@app8.narrota.com.br
 # Remover arquivos de configuração
 sudo rm /var/www/html/fatura/public/db_setup.php
 sudo rm /var/www/html/fatura/public/system-check.php
+```
+
+## Configurações Adicionais
+
+### Criação de Diretórios de API
+
+Se os diretórios da API não forem criados automaticamente, crie-os manualmente:
+
+```bash
+# Conectar ao servidor
+ssh usuario@app8.narrota.com.br
+
+# Criar diretórios da API
+sudo mkdir -p /var/www/html/fatura/public/api/config
+sudo mkdir -p /var/www/html/fatura/public/api/checklists
+sudo mkdir -p /var/www/html/fatura/public/uploads
+
+# Configurar permissões
+sudo chown -R www-data:www-data /var/www/html/fatura/public/api
+sudo chown -R www-data:www-data /var/www/html/fatura/public/uploads
+```
+
+### Configuração do Banco de Dados
+
+Caso o arquivo de configuração não seja criado automaticamente, crie-o manualmente:
+
+```bash
+sudo nano /var/www/html/fatura/public/api/config/database.php
+```
+
+Adicione o seguinte conteúdo:
+
+```php
+<?php
+// Database Configuration
+return [
+    'host' => 'localhost',
+    'database' => 'checklist_manager',
+    'username' => 'checklist_user',
+    'password' => 'sua_senha_segura',
+    'charset' => 'utf8mb4',
+    'collation' => 'utf8mb4_unicode_ci'
+];
 ```
 
 ## Estrutura de Diretórios
@@ -229,6 +277,40 @@ sudo find /var/www/html/fatura -type d -exec chmod 755 {} \;
 sudo chmod -R 775 /var/www/html/fatura/public/uploads
 ```
 
+### Problema: Páginas não carregam corretamente (erro 404)
+
+```bash
+# Verificar se o mod_rewrite está ativado
+sudo a2enmod rewrite
+
+# Verificar a configuração do .htaccess
+cat /var/www/html/fatura/public/.htaccess
+
+# Verificar se o AllowOverride está configurado corretamente
+grep -r "AllowOverride" /etc/apache2/sites-available/
+
+# Reiniciar o Apache
+sudo systemctl restart apache2
+```
+
+### Problema: Páginas em branco sem erros visíveis
+
+```bash
+# Habilitar temporariamente a exibição de erros do PHP
+sudo nano /var/www/html/fatura/public/.htaccess
+
+# Adicione estas linhas:
+php_flag display_errors On
+php_value error_reporting 32767
+
+# Verificar os logs do Apache
+sudo tail -f /var/log/apache2/narrota-error.log
+
+# Depois de resolver o problema, reverta a exibição de erros
+php_flag display_errors Off
+```
+
 ## Suporte
 
 Para obter suporte, entre em contato através do email: suporte@narrota.com.br
+

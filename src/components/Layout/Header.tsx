@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,8 @@ import {
   FileText,
   MessageSquare,
   Settings,
-  CreditCard
+  CreditCard,
+  Store
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -31,7 +32,7 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -39,7 +40,7 @@ const Header: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/login');
   };
 
   const closeMenu = () => {
@@ -53,9 +54,19 @@ const Header: React.FC = () => {
       { label: 'Contratos', path: '/checklist/new', icon: <ClipboardList className="mr-2 h-4 w-4" />, roles: ['admin', 'reseller'] },
       { label: 'Faturas', path: '/invoices', icon: <FileText className="mr-2 h-4 w-4" />, roles: ['admin', 'manager', 'client', 'reseller', 'end_client'] },
       { label: 'WhatsApp', path: '/whatsapp', icon: <MessageSquare className="mr-2 h-4 w-4" />, roles: ['admin', 'reseller'] },
-      { label: 'Asaas', path: '/settings/asaas', icon: <CreditCard className="mr-2 h-4 w-4" />, roles: ['admin', 'reseller'] },
+      { label: 'Asaas', path: '/integrations/asaas', icon: <CreditCard className="mr-2 h-4 w-4" />, roles: ['admin', 'reseller'] },
       { label: 'Configurações', path: '/settings', icon: <Settings className="mr-2 h-4 w-4" />, roles: ['admin'] },
     ];
+    
+    // Add portal da revenda for reseller role
+    if (user?.role === 'reseller') {
+      items.unshift({ 
+        label: 'Portal da Revenda', 
+        path: '/reseller-dashboard', 
+        icon: <Store className="mr-2 h-4 w-4" />, 
+        roles: ['reseller'] 
+      });
+    }
 
     // Filtra itens de menu com base na função do usuário
     return items.filter(item => 
@@ -70,15 +81,15 @@ const Header: React.FC = () => {
       <div className="container flex h-16 items-center">
         <Link to="/" className="flex items-center space-x-2">
           <img src="/assets/logo.svg" alt="Logo" className="h-8 w-auto" />
-          <span className="font-medium hidden md:inline-block">Sistema de Rastreamento</span>
+          <span className="font-medium hidden md:inline-block">Track'n'Me</span>
         </Link>
 
         {/* Desktop Navigation */}
         {user && (
           <nav className="mx-6 hidden md:flex md:items-center md:space-x-4 lg:space-x-6">
-            {filteredMenuItems.map((item) => (
+            {filteredMenuItems.map((item, index) => (
               <Link
-                key={item.path}
+                key={index}
                 to={item.path}
                 className={cn(
                   "text-sm font-medium transition-colors hover:text-primary flex items-center",
@@ -86,6 +97,7 @@ const Header: React.FC = () => {
                     ? "text-primary"
                     : "text-muted-foreground"
                 )}
+                onClick={closeMenu}
               >
                 {item.icon}
                 {item.label}
@@ -144,9 +156,9 @@ const Header: React.FC = () => {
         <div className="md:hidden border-t">
           <div className="container py-3">
             <nav className="flex flex-col space-y-3">
-              {filteredMenuItems.map((item) => (
+              {filteredMenuItems.map((item, index) => (
                 <Link
-                  key={item.path}
+                  key={index}
                   to={item.path}
                   className={cn(
                     "text-sm font-medium transition-colors hover:text-primary flex items-center px-3 py-2 rounded-md",

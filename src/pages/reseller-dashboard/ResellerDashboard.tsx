@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -13,12 +13,26 @@ import {
   Bell
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 
 const ResellerDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Set active tab based on current location
+  useEffect(() => {
+    if (location.pathname === '/reseller-dashboard') {
+      setActiveTab('dashboard');
+    } else if (location.pathname.includes('/reseller-dashboard/clients')) {
+      setActiveTab('clients');
+    } else if (location.pathname.includes('/reseller-dashboard/finance')) {
+      setActiveTab('finance');
+    } else if (location.pathname.includes('/reseller-dashboard/integrations')) {
+      setActiveTab('integrations');
+    }
+  }, [location]);
 
   if (!user || user.role !== 'reseller') {
     return (
@@ -70,33 +84,39 @@ const ResellerDashboard: React.FC = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-8">
+      <Tabs value={activeTab} onValueChange={(value) => {
+        setActiveTab(value);
+        
+        // Navigate based on tab selection
+        switch(value) {
+          case 'dashboard':
+            navigate('/reseller-dashboard');
+            break;
+          case 'clients':
+            navigate('/reseller-dashboard/clients');
+            break;
+          case 'finance':
+            navigate('/reseller-dashboard/finance');
+            break;
+          case 'integrations':
+            navigate('/reseller-dashboard/integrations');
+            break;
+        }
+      }} className="w-full mb-8">
         <TabsList className="grid w-full md:w-auto grid-cols-4 mb-6">
-          <TabsTrigger 
-            value="dashboard" 
-            onClick={() => navigate('/reseller-dashboard')}
-          >
+          <TabsTrigger value="dashboard">
             <BarChart3 className="mr-2 h-4 w-4" />
             Dashboard
           </TabsTrigger>
-          <TabsTrigger 
-            value="clients" 
-            onClick={() => navigate('/reseller-dashboard/clients')}
-          >
+          <TabsTrigger value="clients">
             <Users className="mr-2 h-4 w-4" />
             Clientes
           </TabsTrigger>
-          <TabsTrigger 
-            value="finance" 
-            onClick={() => navigate('/reseller-dashboard/finance')}
-          >
+          <TabsTrigger value="finance">
             <DollarSign className="mr-2 h-4 w-4" />
             Financeiro
           </TabsTrigger>
-          <TabsTrigger 
-            value="integrations" 
-            onClick={() => navigate('/reseller-dashboard/integrations')}
-          >
+          <TabsTrigger value="integrations">
             <CreditCard className="mr-2 h-4 w-4" />
             Integrações
           </TabsTrigger>

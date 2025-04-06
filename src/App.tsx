@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster as SonnerToaster } from 'sonner';
@@ -56,7 +56,7 @@ const LayoutWrapper = () => {
 
 function App() {
   useEffect(() => {
-    document.title = 'Checklist Manager';
+    document.title = 'Track\'n\'Me';
   }, []);
 
   return (
@@ -68,6 +68,8 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route element={<LayoutWrapper />}>
+            {/* Default redirect to dashboard */}
+            <Route path="" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/clients/new" element={<NewClient />} />
