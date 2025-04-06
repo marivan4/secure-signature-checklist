@@ -99,22 +99,27 @@ echo "<h2>Conexão com o Banco de Dados</h2>";
 $dbConfigFile = __DIR__ . '/api/config/database.php';
 
 if (file_exists($dbConfigFile)) {
+    require_once $dbConfigFile;
+    
     try {
-        $dbConfig = include($dbConfigFile);
-        $mysqli = new mysqli(
-            $dbConfig['host'],
-            $dbConfig['username'],
-            $dbConfig['password'],
-            $dbConfig['database']
-        );
-
-        if ($mysqli->connect_error) {
-            echo "<p class='error'>✗ " . $mysqli->connect_error . "</p>";
-            $dbConnected = false;
-        } else {
+        // Get database connection details from the Database class
+        $database = new Database();
+        $conn = $database->getConnection();
+        
+        if ($conn) {
             echo "<p class='success'>✓ Conexão com o banco de dados estabelecida</p>";
             $dbConnected = true;
-            $mysqli->close();
+            
+            // Test with a simple query
+            $stmt = $conn->query("SELECT 1 as test");
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result && isset($result['test']) && $result['test'] == 1) {
+                echo "<p class='success'>✓ Teste de consulta realizado com sucesso</p>";
+            }
+        } else {
+            echo "<p class='error'>✗ Falha ao estabelecer conexão com o banco de dados</p>";
+            $dbConnected = false;
         }
     } catch (Exception $e) {
         echo "<p class='error'>✗ " . $e->getMessage() . "</p>";
@@ -146,34 +151,6 @@ if (!$apiDirExists) {
     if (mkdir($apiDir, 0755, true)) {
         echo "<p class='success'>✓ Diretório API criado</p>";
         $apiDirExists = true;
-    }
-}
-
-// Check if config directory exists within API
-if ($apiDirExists) {
-    $configDir = $apiDir . '/config';
-    if (!is_dir($configDir)) {
-        if (mkdir($configDir, 0755, true)) {
-            echo "<p class='success'>✓ Diretório de configuração criado</p>";
-        }
-    }
-    
-    // Create basic database configuration if it doesn't exist
-    if (!file_exists($dbConfigFile)) {
-        $dbConfigContent = "<?php
-// Database Configuration
-return [
-    'host' => 'localhost',
-    'database' => 'checklist_manager',
-    'username' => 'checklist_user',
-    'password' => 'secure_password_123',
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci'
-];
-";
-        if (file_put_contents($dbConfigFile, $dbConfigContent)) {
-            echo "<p class='success'>✓ Arquivo de configuração básico criado</p>";
-        }
     }
 }
 
