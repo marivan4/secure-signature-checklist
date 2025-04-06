@@ -5,7 +5,7 @@ class Database {
     private $host = "localhost";
     private $db_name = "checklist_manager";
     private $username = "checklist_user";
-    private $password = "sua_senha_segura"; // Change this to your actual password
+    private $password = "Track2025!#Secure@Pwd"; // Using stronger password that meets policy requirements
     public $conn;
 
     // Get database connection
