@@ -1,0 +1,13 @@
+
+# Redirecionar todas as solicitações para o diretório public
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^$ public/ [L]
+    RewriteRule (.*) public/$1 [L]
+</IfModule>
+
+# Impedir acesso a arquivos sensíveis
+<FilesMatch "^(\.env|composer\.json|package\.json|README\.md|MANUAL_INSTALACAO\.md)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
