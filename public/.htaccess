@@ -10,9 +10,6 @@ RewriteRule ^ - [L]
 # If the request is for a PHP file in the API directory, serve it directly
 RewriteRule ^api/.*\.php$ - [L]
 
-# If the request begins with /api/, serve files in the API directory
-RewriteRule ^api/ - [L]
-
 # Otherwise, redirect all requests to index.html
 RewriteRule ^ index.html [L]
 
@@ -37,7 +34,7 @@ RewriteRule ^ index.html [L]
     </FilesMatch>
 </IfModule>
 
-# PHP settings (if needed)
+# PHP settings
 <IfModule mod_php8.c>
     php_flag display_errors Off
     php_value max_execution_time 300
