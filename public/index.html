@@ -45,12 +45,15 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    
+    <!-- Base path for correct asset loading -->
+    <base href="/public/">
   </head>
 
   <body>
     <div id="root"></div>
     <!-- Script para a aplicação React -->
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="./src/main.tsx"></script>
     <!-- IMPORTANT: Add GPT Engineer script for the "Select" feature -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
   </body>

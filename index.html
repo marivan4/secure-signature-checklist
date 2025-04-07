@@ -3,11 +3,14 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0;url=/" />
     <title>Track'n'Me - Redirecionando</title>
+    <script>
+      // Redireciona para a página principal sem criar um loop infinito
+      window.location.replace("/public/");
+    </script>
   </head>
   <body>
-    <p>Redirecionando para <a href="/">Track'n'Me</a>...</p>
+    <p>Redirecionando para <a href="/public/">Track'n'Me</a>...</p>
     <!-- IMPORTANT: Add GPT Engineer script for the "Select" feature -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
   </body>

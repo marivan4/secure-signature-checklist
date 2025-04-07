@@ -1,6 +1,7 @@
 
 # Enable rewrite engine
 RewriteEngine On
+RewriteBase /
 
 # If the request is for an actual file or directory, serve it directly
 RewriteCond %{REQUEST_FILENAME} -f [OR]
