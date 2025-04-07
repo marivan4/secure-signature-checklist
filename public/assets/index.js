@@ -1,11 +1,12 @@
 
-// Simple fallback script
+// Script de fallback para quando o React não carregar
 console.log("Track'n'Me application is initializing...");
 
 document.addEventListener("DOMContentLoaded", function() {
   const root = document.getElementById("root");
   
-  if (root) {
+  if (root && root.childElementCount === 0) {
+    console.log("Aplicando fallback da interface...");
     root.innerHTML = `
       <div style="
         display: flex;
@@ -21,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <h1 style="color: #5D3FD3; margin-bottom: 20px;">Track'n'Me</h1>
         <p style="max-width: 600px; margin-bottom: 20px;">
           O sistema Track'n'Me está carregando. Se esta página continuar aparecendo,
-          pode ser necessário implementar corretamente os arquivos de build do React.
+          verifique se os arquivos de build do React foram corretamente implementados.
         </p>
         <div style="display: flex; gap: 10px;">
           <a href="/system-check.php" style="

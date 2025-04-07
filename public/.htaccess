@@ -21,26 +21,11 @@ RewriteRule ^ index.html [L]
     Header set X-XSS-Protection "1; mode=block"
     # Prevent MIME type sniffing
     Header set X-Content-Type-Options "nosniff"
-    # Ensure UTF-8 encoding for all text content
-    AddDefaultCharset UTF-8
-</IfModule>
-
-# Enable CORS for API
-<IfModule mod_headers.c>
-    <FilesMatch "\.(php)$">
-        Header set Access-Control-Allow-Origin "*"
-        Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
-        Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    
+    # Fix MIME type issues for JavaScript modules
+    <FilesMatch "\.(js)$">
+        Header set Content-Type "application/javascript"
     </FilesMatch>
-</IfModule>
-
-# PHP settings
-<IfModule mod_php8.c>
-    php_flag display_errors Off
-    php_value max_execution_time 300
-    php_value upload_max_filesize 10M
-    php_value post_max_size 20M
-    php_value memory_limit 256M
 </IfModule>
 
 # Disable directory listing
