@@ -6,6 +6,21 @@
     RewriteRule (.*) public/$1 [L]
 </IfModule>
 
+# Set correct MIME types
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js)$">
+        Header set Content-Type "application/javascript"
+    </FilesMatch>
+    
+    <FilesMatch "\.(css)$">
+        Header set Content-Type "text/css"
+    </FilesMatch>
+    
+    <FilesMatch "\.(svg)$">
+        Header set Content-Type "image/svg+xml"
+    </FilesMatch>
+</IfModule>
+
 # Impedir acesso a arquivos sensíveis
 <FilesMatch "^(\.env|composer\.json|package\.json|README\.md|MANUAL_INSTALACAO\.md)">
     Order allow,deny

@@ -26,6 +26,16 @@ RewriteRule ^ index.html [L]
     <FilesMatch "\.(js)$">
         Header set Content-Type "application/javascript"
     </FilesMatch>
+    
+    # Set correct MIME type for CSS
+    <FilesMatch "\.(css)$">
+        Header set Content-Type "text/css"
+    </FilesMatch>
+    
+    # Set correct MIME type for SVG
+    <FilesMatch "\.(svg)$">
+        Header set Content-Type "image/svg+xml"
+    </FilesMatch>
 </IfModule>
 
 # Disable directory listing
