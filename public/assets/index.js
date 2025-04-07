@@ -36,14 +36,14 @@ function applyFallbackInterface() {
           verifique se os arquivos de build do React foram corretamente implementados.
         </p>
         <div style="display: flex; gap: 10px;">
-          <a href="./system-check.php" style="
+          <a href="/" style="
             background-color: #5D3FD3;
             color: white;
             padding: 8px 16px;
             border-radius: 4px;
             text-decoration: none;
-          ">Verificar Sistema</a>
-          <a href="./verify-build.php" style="
+          ">Tentar Novamente</a>
+          <a href="/verify-build.php" style="
             background-color: #e2e8f0;
             color: #4a5568;
             padding: 8px 16px;

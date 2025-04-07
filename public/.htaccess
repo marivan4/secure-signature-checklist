@@ -23,17 +23,17 @@ RewriteRule ^ index.html [L]
     Header set X-Content-Type-Options "nosniff"
     
     # Fix MIME type issues for JavaScript modules
-    <FilesMatch "\.(js)$">
+    <FilesMatch "\.js$">
         Header set Content-Type "application/javascript"
     </FilesMatch>
     
     # Set correct MIME type for CSS
-    <FilesMatch "\.(css)$">
+    <FilesMatch "\.css$">
         Header set Content-Type "text/css"
     </FilesMatch>
     
     # Set correct MIME type for SVG
-    <FilesMatch "\.(svg)$">
+    <FilesMatch "\.svg$">
         Header set Content-Type "image/svg+xml"
     </FilesMatch>
 </IfModule>

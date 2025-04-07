@@ -1,5 +1,5 @@
 
-# Redirecionar todas as solicitações para o diretório public
+# Redirect all requests to the public directory
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^$ public/ [L]
@@ -8,20 +8,20 @@
 
 # Set correct MIME types
 <IfModule mod_headers.c>
-    <FilesMatch "\.(js)$">
+    <FilesMatch "\.js$">
         Header set Content-Type "application/javascript"
     </FilesMatch>
     
-    <FilesMatch "\.(css)$">
+    <FilesMatch "\.css$">
         Header set Content-Type "text/css"
     </FilesMatch>
     
-    <FilesMatch "\.(svg)$">
+    <FilesMatch "\.svg$">
         Header set Content-Type "image/svg+xml"
     </FilesMatch>
 </IfModule>
 
-# Impedir acesso a arquivos sensíveis
+# Prevent access to sensitive files
 <FilesMatch "^(\.env|composer\.json|package\.json|README\.md|MANUAL_INSTALACAO\.md)">
     Order allow,deny
     Deny from all
